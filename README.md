@@ -58,6 +58,6 @@ This module is designed for a **"Select & Connect"** workflow:
 
 ```text
 celestial-auth-portal/
-├── backend-node-core/       # Core Auth & Tenant Logic (Node.js)
-├── frontend-shell-react/    # Portal implementation in React/Next.js
-└── frontend-shell-vue/      # Portal implementation in Vue/Vite
+├── backend-auth-core/       # Core Auth & Tenant Logic (Node.js)
+├── auth-client-react/    # Portal implementation in React/Next.js
+└── auth-client-vue/      # Portal implementation in Vue/Vite

@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model User {
+  id           String       @id @default(cuid())
+  email        String       @unique
+  passwordHash String
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  memberships  Membership[]
+}
+
+model Organization {
+  id            String         @id @default(cuid())
+  name          String
+  slug          String         @unique
+  domain        String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  memberships   Membership[]
+  tenantModules TenantModule[]
+}
+
+model Module {
+  id                String             @id @default(cuid())
+  key               String             @unique
+  name              String
+  entryUrl          String
+  type              ModuleType         @default(MFE)
+  tenantModules     TenantModule[]
+  membershipModules MembershipModule[]
+  createdAt         DateTime           @default(now())
+}
+
+enum ModuleType {
+  MFE
+  EXTERNAL
+}
+
+model Membership {
+  id        String             @id @default(cuid())
+  userId    String
+  orgId     String
+  primary   Boolean            @default(false)
+  createdAt DateTime           @default(now())
+  user      User               @relation(fields: [userId], references: [id])
+  org       Organization       @relation(fields: [orgId], references: [id])
+  roles     MembershipRole[]
+  modules   MembershipModule[]
+
+  @@unique([userId, orgId])
+  @@index([userId])
+  @@index([orgId])
+}
+
+model MemberRole {
+  id          String           @id @default(cuid())
+  name        String           @unique
+  description String?
+  createdAt   DateTime         @default(now())
+  memberships MembershipRole[]
+}
+
+model MembershipRole {
+  id           String     @id @default(cuid())
+  membershipId String
+  roleId       String
+  membership   Membership @relation(fields: [membershipId], references: [id])
+  role         MemberRole @relation(fields: [roleId], references: [id])
+
+  @@unique([membershipId, roleId])
+}
+
+model TenantModule {
+  id        String       @id @default(cuid())
+  orgId     String
+  moduleId  String
+  enabled   Boolean      @default(true)
+  config    Json?
+  org       Organization @relation(fields: [orgId], references: [id])
+  module    Module       @relation(fields: [moduleId], references: [id])
+  createdAt DateTime     @default(now())
+
+  @@unique([orgId, moduleId])
+  @@index([orgId])
+}
+
+model MembershipModule {
+  id           String     @id @default(cuid())
+  membershipId String
+  moduleId     String
+  enabled      Boolean    @default(true)
+  membership   Membership @relation(fields: [membershipId], references: [id])
+  module       Module     @relation(fields: [moduleId], references: [id])
+
+  @@unique([membershipId, moduleId])
+}
