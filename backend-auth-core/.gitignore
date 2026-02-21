@@ -1,8 +1,0 @@
-node_modules
-dist
-.env
-*.log
-pnpm-lock.yaml
-package-lock.json
-yarn.lock
-
