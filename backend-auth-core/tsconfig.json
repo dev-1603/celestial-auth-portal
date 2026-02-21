@@ -18,11 +18,13 @@
     "noFallthroughCasesInSwitch": true,
     "types": [
       "vitest/globals",
-      "node"
+      "node",
+      "express"
     ]
   },
   "include": [
     "src/**/*",
+    "src",
     "index.ts"
   ],
   "exclude": [

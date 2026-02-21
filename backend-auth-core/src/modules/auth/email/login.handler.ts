@@ -2,6 +2,7 @@ import type { Request, Response, NextFunction } from 'express';
 import { findGlobalUserWithTenantByEmail } from '../../../repositories/user.repository';
 import { verifyUserPassword, buildLoginTokens } from '../../../services/token.service';
 import type { JWTPayload } from '../../../lib/jwt';
+import type { GlobalRole } from '../../../lib/jwt';
 
 export const loginWithEmailPassword = async (
     req: Request,
@@ -36,7 +37,7 @@ export const loginWithEmailPassword = async (
             tenantId: user.tenantId,
             tenantSlug: user.tenantSlug,
             email: user.email,
-            role: 'user',
+            role: 'USER' as GlobalRole,
         };
 
         const { accessToken, refreshCookie } = buildLoginTokens(payload);

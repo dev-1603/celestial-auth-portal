@@ -1,9 +1,10 @@
-export const resolveServiceUrl = (env: { DIRECT_URL?: string; ALLOWED_ORIGINS?: string; PORT?: string | number }) => {
-  if (env.DIRECT_URL) return env.DIRECT_URL.replace(/\/$/, '')
-  const firstAllowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).find(Boolean)
-  if (firstAllowed && (firstAllowed.startsWith('http://') || firstAllowed.startsWith('https://'))) {
-    return firstAllowed.replace(/\/$/, '')
-  }
-  return `http://localhost:${env.PORT}`
+export const resolveServiceUrl = (env: { SERVICE_URL?: string; PORT?: string | number }) => {
+  const { SERVICE_URL, PORT } = env
+  const port = PORT ?? process.env.PORT ?? 5001
+
+  if (SERVICE_URL) return SERVICE_URL.replace(/\/$/, '')
+
+  // Fallback to localhost with provided port
+  return `http://localhost:${port}`
 }
 
