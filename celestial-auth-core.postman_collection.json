@@ -1,0 +1,266 @@
+{
+    "info": {
+        "name": "Celestial Auth Core - Email Auth",
+        "_postman_id": "00000000-0000-0000-0000-000000000001",
+        "description": "Auth module for @celestial/auth-core: health, login, logout.\nIncludes sample requests and placeholders for tests.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "item": [
+        {
+            "name": "Health",
+            "item": [
+                {
+                    "name": "GET /health",
+                    "request": {
+                        "method": "GET",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/health",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "health"
+                            ]
+                        }
+                    },
+                    "response": [
+                        {
+                            "name": "Sample 200",
+                            "originalRequest": {
+                                "method": "GET",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/health",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "health"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"status\": \"ok\",\n  \"uptime\": 123.45,\n  \"timestamp\": \"2025-01-01T00:00:00.000Z\"\n}"
+                        }
+                    ]
+                }
+            ]
+        },
+        {
+            "name": "Auth - Email",
+            "item": [
+                {
+                    "name": "POST /auth/email/login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "// Basic smoke tests for login",
+                                    "pm.test(\"Status code is 200 or 401\", function () {",
+                                    "  pm.expect([200, 401]).to.include(pm.response.code);",
+                                    "});",
+                                    "",
+                                    "if (pm.response.code === 200) {",
+                                    "  pm.test(\"Access token is present\", function () {",
+                                    "    var json = pm.response.json();",
+                                    "    pm.expect(json).to.have.property('accessToken');",
+                                    "    pm.expect(json).to.have.property('user');",
+                                    "    pm.expect(json.user).to.have.property('email');",
+                                    "  });",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/email/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "email",
+                                "login"
+                            ]
+                        },
+                        "description": "Email/password login.\n\n200: returns accessToken + user.\n400: missing email or password.\n401: invalid credentials."
+                    },
+                    "response": [
+                        {
+                            "name": "Sample 200",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"password123\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/auth/email/login",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "email",
+                                        "login"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"accessToken\": \"<jwt>\",\n  \"user\": {\n    \"id\": \"user-1\",\n    \"email\": \"test@example.com\",\n    \"tenantId\": \"tenant-1\",\n    \"tenantSlug\": \"example-tenant\"\n  }\n}"
+                        },
+                        {
+                            "name": "Sample 400 - Missing fields",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"test@example.com\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/auth/email/login",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "email",
+                                        "login"
+                                    ]
+                                }
+                            },
+                            "status": "Bad Request",
+                            "code": 400,
+                            "body": "{\n  \"error\": \"Email and password are required\"\n}"
+                        },
+                        {
+                            "name": "Sample 401 - Invalid credentials",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [
+                                    {
+                                        "key": "Content-Type",
+                                        "value": "application/json"
+                                    }
+                                ],
+                                "body": {
+                                    "mode": "raw",
+                                    "raw": "{\n  \"email\": \"test@example.com\",\n  \"password\": \"wrong\"\n}"
+                                },
+                                "url": {
+                                    "raw": "{{baseUrl}}/auth/email/login",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "email",
+                                        "login"
+                                    ]
+                                }
+                            },
+                            "status": "Unauthorized",
+                            "code": 401,
+                            "body": "{\n  \"error\": \"Invalid credentials\"\n}"
+                        }
+                    ]
+                },
+                {
+                    "name": "POST /auth/email/logout",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "pm.test(\"Status code is 200\", function () {",
+                                    "  pm.expect(pm.response.code).to.equal(200);",
+                                    "});",
+                                    "",
+                                    "pm.test(\"Success flag is true\", function () {",
+                                    "  var json = pm.response.json();",
+                                    "  pm.expect(json).to.have.property('success', true);",
+                                    "});"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "method": "POST",
+                        "header": [],
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/email/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "email",
+                                "logout"
+                            ]
+                        },
+                        "description": "Logout.\nClears the refresh token cookie and returns { success: true }."
+                    },
+                    "response": [
+                        {
+                            "name": "Sample 200",
+                            "originalRequest": {
+                                "method": "POST",
+                                "header": [],
+                                "url": {
+                                    "raw": "{{baseUrl}}/auth/email/logout",
+                                    "host": [
+                                        "{{baseUrl}}"
+                                    ],
+                                    "path": [
+                                        "auth",
+                                        "email",
+                                        "logout"
+                                    ]
+                                }
+                            },
+                            "status": "OK",
+                            "code": 200,
+                            "body": "{\n  \"success\": true\n}"
+                        }
+                    ]
+                }
+            ]
+        }
+    ],
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://localhost:3000"
+        }
+    ]
+}
