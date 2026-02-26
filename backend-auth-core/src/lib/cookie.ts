@@ -1,4 +1,3 @@
-// src/lib/cookie.ts
 export interface RefreshCookieOptions {
     secure?: boolean
     domain?: string

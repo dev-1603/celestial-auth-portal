@@ -98,7 +98,7 @@ describe('loginWithEmailPassword', () => {
             email: 'a@test.com',
             tenantId: 'tenant-1',
             tenantSlug: 'tenant-slug',
-            role: 'user',
+            role: 'USER',
         });
         expect(res.cookie).toHaveBeenCalledWith('celestial_refresh_token', 'refresh-token', {
             httpOnly: true,

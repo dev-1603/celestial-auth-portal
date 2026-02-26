@@ -1,18 +1,15 @@
 // src/repositories/user.repository.ts
 import { prisma } from '../lib/prisma'
+import type { GlobalUser as PrismaGlobalUser } from '@prisma/client'
 
-export interface GlobalUser {
-    id: string
-    email: string
-    passwordHash: string | null
-}
+export type GlobalUser = PrismaGlobalUser
 
 export interface CreateGlobalUserInput {
     email: string
     passwordHash: string
 }
 
-export interface GlobalUserWithTenant extends GlobalUser {
+export interface GlobalUserWithTenant extends PrismaGlobalUser {
     tenantId: string
     tenantSlug?: string
 }
@@ -50,10 +47,49 @@ export const findGlobalUserWithTenantByEmail = async (
     if (!link || !link.user) return null
 
     return {
-        id: link.user.id,
-        email: link.user.email,
-        passwordHash: link.user.passwordHash,
+        ...link.user,
         tenantId: link.tenantId,
         tenantSlug: link.tenant?.slug ?? undefined,
+    }
+}
+
+export const findGlobalUserById = async (
+    userId: string,
+): Promise<GlobalUser | null> => {
+    return prisma.globalUser.findUnique({
+        where: { id: userId },
+    })
+}
+
+export interface TenantUserLinkInfo {
+    tenantId: string
+    tenantSlug?: string
+    isTenantOwner: boolean
+    status: string
+}
+
+export const findTenantUserLink = async (
+    userId: string,
+    tenantId: string,
+): Promise<TenantUserLinkInfo | null> => {
+    const link = await prisma.tenantUserLink.findFirst({
+        where: {
+            tenantId,
+            user: { id: userId },
+        },
+        include: {
+            tenant: {
+                select: { slug: true },
+            },
+        },
+    })
+
+    if (!link) return null
+
+    return {
+        tenantId: link.tenantId,
+        tenantSlug: link.tenant?.slug ?? undefined,
+        isTenantOwner: (link as any).isTenantOwner ?? false,
+        status: (link as any).status ?? '',
     }
 }

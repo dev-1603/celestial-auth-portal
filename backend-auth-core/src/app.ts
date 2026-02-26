@@ -2,15 +2,15 @@
  * src/app.ts
  *
  * Application factory: creates and configures the Express app.
- * Error handler is registered LAST.
- *
- * Export createApp() so tests can import a fresh instance with different envs.
+ * Routes are initialized only via routes/index.ts. Error handler is registered LAST.
  */
 import express, { Application } from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
-import authRoutes from './routes/auth'
+import swaggerUi from 'swagger-ui-express'
+import { registerRoutes } from './routes'
+import { getOpenApiSpec } from './docs/swagger.config'
 import errorHandler, { registerProcessHandlers } from './middleware/errorHandler'
 
 /**
@@ -25,16 +25,33 @@ export function createApp(): Application {
   app.use(express.json())
   app.use(cookieParser())
 
-  // Routes
-  app.use('/auth', authRoutes)
+  // API docs (OpenAPI 3 spec + Swagger UI at /docs)
+  const openApiSpec = getOpenApiSpec()
+  app.get('/docs/spec', (_req, res) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(openApiSpec)
+  })
+  app.use(
+    '/docs',
+    swaggerUi.serve,
+    swaggerUi.setup(openApiSpec, {
+      swaggerOptions: {
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        filter: true,
+        tryItOutEnabled: true,
+      },
+      customSiteTitle: 'Celestial Auth Core API',
+      customCss: '.swagger-ui .topbar { display: none }',
+    })
+  )
 
-  // Health check
-  app.get('/health', (_req, res) => res.json({ success: true }))
+  // Routes (single entry: versioned API and module prefixes in routes/index.ts)
+  registerRoutes(app)
 
   // Error handler (must be last)
   app.use(errorHandler)
 
-  // Process-level handlers for unhandledRejection
   registerProcessHandlers()
 
   return app
