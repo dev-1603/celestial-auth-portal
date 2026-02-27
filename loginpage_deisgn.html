@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Celestial Auth Portal | Enterprise Mockup</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; transition: all 0.4s ease; }
+        
+        /* Unified Component Styles */
+        .elevated-card {
+            background: #ffffff;
+            border: 1px solid #e5eaf2;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.03), 0 10px 10px -5px rgba(0, 0, 0, 0.02);
+            border-radius: 16px;
+        }
+
+        .workspace-card {
+            background: #ffffff;
+            border: 1px solid #eef2f7;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .workspace-card:hover {
+            border-color: #2563eb;
+            box-shadow: 0 10px 15px -3px rgba(37, 99, 235, 0.05);
+            transform: translateY(-2px);
+        }
+
+        .input-field {
+            background: #ffffff;
+            border: 1px solid #d1d9e6;
+            transition: all 0.2s ease;
+        }
+        .input-field:focus {
+            outline: none;
+            border-color: #2563eb;
+            box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.08);
+        }
+
+        .primary-btn { background: #2563eb; transition: all 0.2s ease; }
+        .primary-btn:hover { background: #1d4ed8; }
+
+        .bg-gradient-soft { background: radial-gradient(circle at top left, #f1f4ff 0%, #f8fafc 100%); }
+
+        .template-split-image { 
+            background: url('https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&q=80&w=1200') center/cover; 
+        }
+
+        .fade-in-up { animation: fadeInUp 0.5s ease-out forwards; }
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .tag-prod { background: #fff7ed; color: #9a3412; border: 1px solid #ffedd5; }
+        .tag-sandbox { background: #f0fdf4; color: #166534; border: 1px solid #dcfce7; }
+    </style>
+</head>
+<body id="page-body" class="bg-gradient-soft min-h-screen overflow-x-hidden">
+
+    <!-- PERSISTENT BRANDING (Logic-controlled) -->
+    <div id="page-branding" class="fixed top-8 left-8 flex items-center space-x-2 z-10">
+        <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+            <svg class="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/></svg>
+        </div>
+        <span class="text-xl font-bold text-slate-800 tracking-tight">Celestial</span>
+    </div>
+
+    <!-- ADVANCED TEMPLATE SWITCHER -->
+    <div class="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-white/90 backdrop-blur-md border border-slate-200 px-3 py-2 rounded-full shadow-2xl flex items-center space-x-1">
+        <div class="flex items-center space-x-1 border-r border-slate-200 pr-3 mr-2">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mr-2">Login</span>
+            <button onclick="setLayout('elevated')" id="btn-elevated" class="px-3 py-1.5 text-[11px] font-bold rounded-full transition-all">Elevated</button>
+            <button onclick="setLayout('split')" id="btn-split" class="px-3 py-1.5 text-[11px] font-bold rounded-full transition-all">Split</button>
+            <button onclick="setLayout('full')" id="btn-full" class="px-3 py-1.5 text-[11px] font-bold rounded-full transition-all">Full Page</button>
+            <button onclick="setLayout('qr')" id="btn-qr" class="px-3 py-1.5 text-[11px] font-bold rounded-full transition-all">QR/App</button>
+        </div>
+        <div class="flex items-center space-x-1">
+            <span class="text-[10px] font-bold text-slate-400 uppercase tracking-tighter mr-2">Post-Login</span>
+            <button onclick="setLayout('dashboard')" id="btn-dashboard" class="px-4 py-1.5 text-[11px] font-bold rounded-full transition-all bg-slate-100 text-slate-600">Dashboard</button>
+        </div>
+    </div>
+
+    <!-- MAIN VIEWPORT CONTAINER -->
+    <div id="main-container" class="min-h-screen">
+        
+        <!-- VARIANT 1: ELEVATED CARD (Standard) -->
+        <div id="view-elevated" class="min-h-screen flex items-center justify-center p-4 fade-in-up">
+            <div class="elevated-card w-full max-w-[440px] p-10 md:p-12">
+                <div class="flex flex-col items-center mb-10">
+                    <div class="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center mb-5 shadow-lg shadow-blue-100">
+                        <svg class="w-8 h-8 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/></svg>
+                    </div>
+                    <h2 class="text-sm font-semibold text-slate-500 tracking-wide mb-1">Celestial Auth Portal</h2>
+                    <h1 class="text-2xl font-bold text-slate-900 mb-1">Login</h1>
+                    <p class="text-[15px] text-slate-400">Access your workspace</p>
+                </div>
+                <div id="elevated-form-placeholder"></div>
+            </div>
+        </div>
+
+        <!-- VARIANT 2: SPLIT 2-COLUMN -->
+        <div id="view-split" class="hidden w-full h-screen grid lg:grid-cols-2">
+            <div class="flex items-center justify-center p-8 bg-white overflow-y-auto">
+                <div id="split-form-placeholder" class="w-full max-w-md py-12"></div>
+            </div>
+            <div class="hidden lg:block template-split-image relative">
+                <div class="absolute inset-0 bg-blue-900/10 flex items-end p-16">
+                    <div class="text-white max-w-lg">
+                        <h3 class="text-4xl font-bold mb-4 drop-shadow-sm">Modern Identity Management</h3>
+                        <p class="text-lg text-white/90 drop-shadow-sm">The world's most advanced security layer for enterprise systems. Fast, secure, and configuration-driven.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VARIANT 3: FULL PAGE (NAV + FOOTER) -->
+        <div id="view-full" class="hidden w-full min-h-screen bg-slate-50 flex flex-col">
+            <nav class="w-full bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center sticky top-0 z-20">
+                <div class="flex items-center space-x-2">
+                    <div class="w-8 h-8 bg-blue-600 rounded flex items-center justify-center text-white">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/></svg>
+                    </div>
+                    <span class="font-bold tracking-tight text-slate-800">CELESTIAL</span>
+                </div>
+                <div class="space-x-6 text-sm font-medium text-slate-500">
+                    <a href="#" class="hover:text-blue-600">Product</a><a href="#" class="hover:text-blue-600">Security</a><a href="#" class="hover:text-blue-600">Docs</a>
+                </div>
+            </nav>
+            <div class="flex-grow flex items-center justify-center py-20 px-4">
+                <div class="elevated-card w-full max-w-[440px] p-10" id="full-form-placeholder"></div>
+            </div>
+            <footer class="bg-white border-t border-slate-200 p-12 grid grid-cols-2 md:grid-cols-4 gap-8">
+                <div class="space-y-4 col-span-2"><p class="text-sm text-slate-400">© 2026 Celestial Auth Portal.</p></div>
+                <div class="space-y-4"><p class="text-xs font-bold text-slate-800 uppercase">Support</p></div>
+                <div class="space-y-4"><p class="text-xs font-bold text-slate-800 uppercase">Legal</p></div>
+            </footer>
+        </div>
+
+        <!-- VARIANT 4: QR LOGIN -->
+        <div id="view-qr" class="hidden min-h-screen flex items-center justify-center p-4">
+            <div class="elevated-card w-full max-w-[800px] overflow-hidden grid md:grid-cols-2 fade-in-up">
+                <div class="p-12 border-r border-slate-100 flex flex-col justify-center">
+                    <h2 class="text-3xl font-bold mb-2 text-slate-900">Welcome back</h2>
+                    <p class="text-slate-400 mb-8">Choose your login method</p>
+                    <div id="qr-form-placeholder"></div>
+                </div>
+                <div class="p-12 bg-slate-50 flex flex-col items-center justify-center text-center">
+                    <div class="p-6 bg-white rounded-3xl shadow-sm mb-6">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=CelestialAuth" class="w-40 h-40">
+                    </div>
+                    <h3 class="text-xl font-bold mb-2 text-slate-900">Login with Mobile</h3>
+                    <p class="text-sm text-slate-500 max-w-[220px]">Open the Celestial App on your phone to scan and log in instantly.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- POST-LOGIN: DASHBOARD -->
+        <div id="view-dashboard" class="hidden min-h-screen bg-slate-100/50 p-4 lg:p-12 flex items-center justify-center">
+            <div class="elevated-card w-full max-w-[1280px] overflow-hidden fade-in-up">
+                <header class="px-8 py-5 border-b border-slate-100 flex justify-between items-center bg-white/50 backdrop-blur-sm">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-7 h-7 bg-blue-600 rounded flex items-center justify-center">
+                             <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/></svg>
+                        </div>
+                        <span class="font-bold text-slate-800 tracking-tight">Celestial <span class="text-slate-400 font-normal">Auth Portal</span></span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="text-right hidden sm:block"><p class="text-xs font-bold text-slate-900">Ananya Rao</p><p class="text-[10px] text-slate-400">Account Owner</p></div>
+                        <img src="https://ui-avatars.com/api/?name=Ananya+Rao&background=2563eb&color=fff" class="w-9 h-9 rounded-full border-2 border-white">
+                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/></svg>
+                    </div>
+                </header>
+                <div class="grid lg:grid-cols-4 min-h-[640px]">
+                    <div class="lg:col-span-3 p-8 bg-slate-50/30">
+                        <div class="mb-10 text-center"><h1 class="text-3xl font-bold text-slate-900 mb-2">Choose your workspace</h1><p class="text-slate-500 text-sm">Select an app or workspace you have access to.</p></div>
+                        <div class="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4 mb-8">
+                            <div class="relative flex-grow">
+                                <svg class="w-4 h-4 absolute left-4 top-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                                <input type="text" placeholder="Search apps and workspaces" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm input-focus shadow-sm">
+                            </div>
+                            <div class="flex bg-slate-200/50 p-1 rounded-xl">
+                                <button class="px-4 py-2 text-xs font-bold rounded-lg bg-blue-600 text-white shadow-sm">All</button>
+                                <button class="px-4 py-2 text-xs font-bold rounded-lg text-slate-600">Pinned</button>
+                            </div>
+                        </div>
+                        <div class="grid sm:grid-cols-2 xl:grid-cols-3 gap-5" id="workspace-grid"></div>
+                        <div class="mt-12 flex justify-between items-center text-xs text-slate-400 border-t border-slate-100 pt-6">
+                            <button class="hover:text-blue-600 underline font-medium">Request access</button>
+                            <button class="flex items-center px-4 py-2 border border-slate-200 rounded-lg hover:bg-white text-slate-600">Open Admin Console</button>
+                        </div>
+                    </div>
+                    <aside class="lg:col-span-1 border-l border-slate-100 p-8 bg-white/30 space-y-10">
+                        <div><h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Recently accessed</h3><div class="space-y-4" id="recent-list"></div></div>
+                        <div><h3 class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-6">Organization</h3><div class="p-4 border border-slate-100 rounded-2xl flex items-center space-x-4 bg-white/50"><div class="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><svg class="w-6 h-6" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/></svg></div><div class="flex-grow"><p class="text-sm font-bold text-slate-900">Celestial Labs</p><p class="text-[11px] text-slate-400">Switch organization</p></div></div></div>
+                    </aside>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- REUSABLE MODULES (TEMPLATES) -->
+    <template id="form-module">
+        <form class="space-y-5">
+            <div class="space-y-1.5"><label class="text-[13px] font-medium text-slate-700 ml-1">Email</label><input type="email" placeholder="name@example.com" class="w-full px-4 py-3 input-field rounded-lg text-[15px]"></div>
+            <div class="space-y-1.5"><div class="flex justify-between items-center px-1"><label class="text-[13px] font-medium text-slate-700">Password</label><a href="#" class="text-[13px] font-medium text-blue-600 hover:underline">Forgot?</a></div><input type="password" placeholder="••••••••" class="w-full px-4 py-3 input-field rounded-lg text-[15px]"></div>
+            <div class="flex items-center px-1"><label class="flex items-center text-[13px] text-slate-500 cursor-pointer"><input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-blue-600 mr-2"> Remember me</label></div>
+            <button type="button" onclick="setLayout('dashboard')" class="w-full py-3 primary-btn text-white font-semibold rounded-lg shadow-sm">Continue to Workspace</button>
+        </form>
+        <div class="flex items-center my-8"><div class="divider-line"></div><span class="px-4 text-[11px] font-bold text-slate-400 uppercase tracking-widest">or</span><div class="divider-line"></div></div>
+        <div class="grid grid-cols-3 gap-3 mb-6">
+            <button class="flex justify-center items-center py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"><img src="https://www.gstatic.com/images/branding/product/1x/gsa_48dp.png" class="w-5 h-5"></button>
+            <button class="flex justify-center items-center py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"><svg class="w-5 h-5 text-[#00a4ef]" fill="currentColor" viewBox="0 0 23 23"><path d="M0 0h11v11H0zM12 0h11v11H12zM0 12h11v11H0zM12 12h11v11H12z"/></svg></button>
+            <button class="flex justify-center items-center py-2.5 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"><svg class="w-5 h-5 text-slate-900" fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg></button>
+        </div>
+        <button class="w-full py-3 flex items-center justify-center border border-slate-200 rounded-lg text-slate-700 text-sm font-semibold hover:bg-slate-50 mb-8"><svg class="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg> Log in with SSO</button>
+        <p class="text-[11px] text-center text-slate-400 leading-relaxed max-w-[280px] mx-auto">By continuing, you agree to the <a href="#" class="text-slate-600 font-medium">Terms</a> and <a href="#" class="text-slate-600 font-medium">Privacy Policy</a>.</p>
+    </template>
+
+    <template id="workspace-card-template">
+        <div class="workspace-card rounded-2xl p-6 flex flex-col relative overflow-hidden group">
+            <div class="flex justify-between items-start mb-4"><div class="w-10 h-10 rounded-xl bg-slate-50 flex items-center justify-center text-slate-600 icon-box"></div><button class="text-slate-200 hover:text-yellow-400"><svg class="w-5 h-5 fill-current" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg></button></div>
+            <h3 class="font-bold text-slate-900 mb-1 workspace-name"></h3><p class="text-xs text-slate-400 mb-6 workspace-desc"></p>
+            <div class="mt-auto pt-4 flex items-center space-x-2 border-t border-slate-50"><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase workspace-tag"></span><span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase text-blue-600 bg-blue-50 workspace-role"></span></div>
+            <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] opacity-0 group-[.restricted]:opacity-100 flex flex-col items-center justify-center text-white transition-all"><svg class="w-6 h-6 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg><span class="text-xs font-bold">Access restricted</span><button class="mt-3 px-4 py-1.5 bg-white text-slate-900 rounded-lg text-[11px] font-bold">Request</button></div>
+        </div>
+    </template>
+
+    <script>
+        const CONFIG = {
+            workspaces: [
+                { id: 1, name: "Analytics Hub", desc: "View product metrics and dashboards", type: "Production", role: "Admin", restricted: false, icon: "analytics" },
+                { id: 2, name: "Billing Console", desc: "Manage subscriptions and invoices", type: "Production", role: "Admin", restricted: false, icon: "billing" },
+                { id: 3, name: "Dev Sandbox", desc: "Development testing environment", type: "Sandbox", role: "Dev", restricted: false, icon: "sandbox" },
+                { id: 4, name: "Secret Archive", desc: "Access restricted documents", type: "Production", role: "Restricted", restricted: true, icon: "archive" }
+            ],
+            icons: {
+                analytics: '<svg class="w-6 h-6 text-orange-400" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/></svg>',
+                billing: '<svg class="w-6 h-6 text-blue-400" fill="currentColor" viewBox="0 0 24 24"><path d="M21 18H3V6h18v12zm-11-9H5v2h5V9zm7 4H5v2h12v-2zm-2-4h-3v2h3V9z"/></svg>',
+                sandbox: '<svg class="w-6 h-6 text-emerald-400" fill="currentColor" viewBox="0 0 24 24"><path d="M13 2.05v3.03c3.39.49 6 3.39 6 6.92 0 .9-.18 1.75-.48 2.54l2.6 1.53c.56-1.24.88-2.62.88-4.07 0-5.18-3.95-9.45-9-9.95z"/></svg>',
+                archive: '<svg class="w-6 h-6 text-slate-400" fill="currentColor" viewBox="0 0 24 24"><path d="M20 6h-8l-2-2H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2zm0 12H4V8h16v10z"/></svg>'
+            }
+        };
+
+        function setLayout(type) {
+            ['view-elevated', 'view-split', 'view-full', 'view-qr', 'view-dashboard'].forEach(v => {
+                document.getElementById(v).classList.add('hidden');
+            });
+
+            const body = document.getElementById('page-body');
+            const branding = document.getElementById('page-branding');
+            branding.classList.remove('hidden');
+
+            if (type === 'elevated') {
+                document.getElementById('view-elevated').classList.remove('hidden');
+                body.className = "bg-gradient-soft min-h-screen";
+                injectForm('elevated-form-placeholder');
+            } else if (type === 'split') {
+                document.getElementById('view-split').classList.remove('hidden');
+                branding.classList.add('hidden');
+                injectForm('split-form-placeholder');
+            } else if (type === 'full') {
+                document.getElementById('view-full').classList.remove('hidden');
+                body.className = "bg-slate-50 min-h-screen";
+                injectForm('full-form-placeholder');
+            } else if (type === 'qr') {
+                document.getElementById('view-qr').classList.remove('hidden');
+                body.className = "bg-slate-100 min-h-screen flex items-center justify-center p-4";
+                injectForm('qr-form-placeholder');
+            } else if (type === 'dashboard') {
+                document.getElementById('view-dashboard').classList.remove('hidden');
+                body.className = "bg-slate-100/50 min-h-screen";
+                branding.classList.add('hidden');
+                renderDashboard();
+            }
+
+            // Button active state
+            ['elevated', 'split', 'full', 'qr', 'dashboard'].forEach(b => {
+                const el = document.getElementById('btn-' + b);
+                el.className = "px-4 py-1.5 text-[11px] font-bold rounded-full transition-all " + 
+                              (b === type ? "bg-blue-600 text-white shadow-sm" : "text-slate-500 hover:bg-slate-100");
+            });
+        }
+
+        function injectForm(targetId) {
+            const target = document.getElementById(targetId);
+            const template = document.getElementById('form-module');
+            target.innerHTML = '';
+            target.appendChild(template.content.cloneNode(true));
+        }
+
+        function renderDashboard() {
+            const grid = document.getElementById('workspace-grid');
+            const template = document.getElementById('workspace-card-template');
+            grid.innerHTML = '';
+            CONFIG.workspaces.forEach(ws => {
+                const clone = template.content.cloneNode(true);
+                const container = clone.querySelector('.workspace-card');
+                if (ws.restricted) container.classList.add('restricted');
+                clone.querySelector('.workspace-name').textContent = ws.name;
+                clone.querySelector('.workspace-desc').textContent = ws.desc;
+                clone.querySelector('.workspace-role').textContent = `Role: ${ws.role}`;
+                const tagEl = clone.querySelector('.workspace-tag');
+                tagEl.textContent = ws.type;
+                tagEl.className += (ws.type === "Production" ? " tag-prod" : " tag-sandbox");
+                clone.querySelector('.icon-box').innerHTML = CONFIG.icons[ws.icon];
+                grid.appendChild(clone);
+            });
+            // Update Recent
+            const recent = document.getElementById('recent-list');
+            recent.innerHTML = `
+                <div class="flex items-center space-x-3 p-3 rounded-xl hover:bg-white cursor-pointer transition-colors border border-transparent hover:border-slate-100">
+                    <div class="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600">${CONFIG.icons.analytics}</div>
+                    <div><p class="text-xs font-bold text-slate-900 leading-none">Analytics Hub</p><p class="text-[10px] text-slate-400">1 hour ago</p></div>
+                </div>
+            `;
+        }
+
+        window.onload = () => setLayout('elevated');
+    </script>
+</body>
+</html>
