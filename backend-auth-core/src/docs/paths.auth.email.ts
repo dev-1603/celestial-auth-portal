@@ -8,6 +8,29 @@
 
 /**
  * @openapi
+ * /:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: API root
+ *     operationId: getApiRoot
+ *     description: Returns a simple message indicating the Celestial Auth Core API is available.
+ *     responses:
+ *       '200':
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Celestial Auth Core API
+ */
+const root = true
+
+/**
+ * @openapi
  * /health:
  *   get:
  *     tags:
@@ -169,4 +192,4 @@ const refresh = true
  */
 const me = true
 
-export { health, login, logout, refresh, me }
+export { root, health, login, logout, refresh, me }

@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Celestial Auth Core API",
+    "title": "Celestial Auth  API",
     "version": "1.0.0",
-    "description": "B2B SaaS auth API with multi-tenant JWT, email/password, and cookie-based refresh. All authenticated endpoints require `Authorization: Bearer <access_token>`.",
+    "description": "Pluggable auth service powering multi-tenant identity, JWT session management, and tenant-scoped role resolution for the Celestial SaaS platform. Protected routes require: `Authorization: Bearer <access_token>` Refresh tokens are issued as httpOnly cookies — use `POST /auth/refresh` to renew sessions silently.",
     "contact": {
       "name": "API Support"
     },

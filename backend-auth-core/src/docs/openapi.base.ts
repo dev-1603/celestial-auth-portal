@@ -5,22 +5,23 @@
 const base = {
   openapi: '3.0.3',
   info: {
-    title: 'Celestial Auth Core API',
+    title: 'Celestial Auth  API',
     version: '1.0.0',
     description: [
-      'B2B SaaS auth API with multi-tenant JWT, email/password, and cookie-based refresh.',
-      'All authenticated endpoints require `Authorization: Bearer <access_token>`.',
+      'Pluggable auth service powering multi-tenant identity, JWT session management, and tenant-scoped role resolution for the Celestial SaaS platform.',
+      'Protected routes require `Authorization: Bearer <access_token>`.',
+      'Refresh tokens are issued as httpOnly cookies — use `POST /auth/refresh` to renew sessions silently.',
     ].join(' '),
-    contact: { name: 'API Support' },
-    license: { name: 'ISC' },
+    contact: { name: 'Debjyoti Mohapatra' },
+    license: { name: 'MIT' },
   },
   servers: [
-    { url: 'http://localhost:3000/api/v1', description: 'Local' },
-    { url: 'https://api.example.com/api/v1', description: 'Production' },
+    { url: `http://localhost:${process.env.PORT || 5001}`, description: 'Local Development' },
+    { url: `${process.env.API_URL}`, description: 'Production' },
   ],
   tags: [
-    { name: 'Health', description: 'Liveness and readiness' },
-    { name: 'Auth - Email', description: 'Email/password login, logout, refresh, me' },
+    { name: 'Health', description: 'Health check endpoint' },
+    { name: 'Auth', description: 'Authentication endpoints' },
   ],
   components: {
     securitySchemes: {

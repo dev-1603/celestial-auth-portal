@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest'
 
 describe('db.config', () => {
-
     beforeEach(() => {
         vi.resetModules()
+        process.env.DB_DIALECT = 'postgres'
         process.env.DATABASE_URL = 'postgresql://test:test@localhost:5432/test_db'
         process.env.DIRECT_URL = 'postgresql://test:test@localhost:5432/test_db'
         process.env.SUPABASE_URL = 'https://test.supabase.co'
@@ -23,10 +23,10 @@ describe('db.config', () => {
         expect(dbConfig.pool.connectTimeoutMs).toBe(5000)
     })
 
-    it('reads supabase config correctly', async () => {
+    it('is dialect-aware and nulls supabase config for postgres', async () => {
         const { dbConfig } = await import('../db.config')
-        expect(dbConfig.supabase.url).toBe('https://test.supabase.co')
-        expect(dbConfig.supabase.anonKey).toBe('test_anon_key')
+        expect(dbConfig.dialect).toBe('postgres')
+        expect(dbConfig.supabase).toBeNull()
     })
-
 })
+

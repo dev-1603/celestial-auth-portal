@@ -7,9 +7,11 @@ import path from 'path'
 import { getOpenApiSpec } from './swagger.config.js'
 
 const spec = getOpenApiSpec()
+
 writeFileSync(
-  path.join(__dirname, '..', '..', 'openapi.json'),
+  path.join(process.cwd(), 'openapi.json'),
   JSON.stringify(spec, null, 2),
-  'utf-8'
+  'utf-8',
 )
+
 console.log('Wrote openapi.json')
