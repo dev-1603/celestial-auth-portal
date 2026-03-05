@@ -1,11 +1,38 @@
 import { createApp } from './src/app'
 import { env } from './src/config/env.config'
-import { startServer } from './src/helpers/server'
+import { createServerController } from './src/helpers/server'
+import { validateDatabaseConnection } from './src/lib/db-validate'
+import { prisma } from './src/lib/prisma'
+import { log } from './src/helpers/logger'
 
 const app = createApp()
 
-// Start server (encapsulates listen, logging, and graceful shutdown)
-// Pass shutdown hooks via options when you have cleanup work (DB, caches, etc.)
-const server = startServer(app, env)
+async function bootstrap() {
+    // Fail fast if DB is unreachable or misconfigured.
+    const health = await validateDatabaseConnection()
+    if (!health.ok) {
+        log('error', 'Database validation failed on startup; refusing to listen', {
+            dialect: health.dialect,
+            error: health.error,
+        })
+        // Non-zero exit so orchestrators can restart / mark as unhealthy.
+        process.exit(1)
+    }
 
-export { server }
+    const controller = createServerController(app, env, {
+        onShutdown: [
+            async () => {
+                await prisma.$disconnect()
+                log('info', 'Prisma disconnected during graceful shutdown')
+            },
+        ],
+    })
+
+    const server = controller.start()
+    return server
+}
+
+// eslint-disable-next-line @typescript-eslint/no-floating-promises
+bootstrap()
+
+export { app }

@@ -13,7 +13,8 @@
     "db:generate": "prisma generate",
     "test": "vitest",
     "test:run": "vitest run",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "docs:generate": "tsx src/docs/generate-spec.ts"
   },
   "keywords": [],
   "author": "",
@@ -29,7 +30,9 @@
     "helmet": "^8.1.0",
     "http-errors": "^2.0.1",
     "http-status-codes": "^2.3.0",
-    "jsonwebtoken": "^9.0.3"
+    "jsonwebtoken": "^9.0.3",
+    "swagger-jsdoc": "^6.2.8",
+    "swagger-ui-express": "^5.0.1"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
@@ -39,6 +42,8 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/node": "^20.4.2",
     "@types/supertest": "^6.0.3",
+    "@types/swagger-jsdoc": "^6.0.4",
+    "@types/swagger-ui-express": "^4.1.8",
     "@vitest/coverage-v8": "^4.0.18",
     "prisma": "5.20.0",
     "supertest": "^7.2.2",
