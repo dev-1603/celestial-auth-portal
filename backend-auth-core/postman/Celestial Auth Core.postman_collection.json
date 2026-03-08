@@ -570,6 +570,114 @@
               "body": "{\n  \"success\": true\n}"
             }
           ]
+        },
+        {
+          "name": "Request Password Reset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => {",
+                  "    pm.expect(pm.response.code).to.equal(200);",
+                  "});",
+                  "pm.test('Response has message', () => {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('message');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/password-reset/request",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email",
+                "password-reset",
+                "request"
+              ]
+            },
+            "description": "Request a password reset. Generates a token and sends it via email. Always returns success (security best practice)."
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Password Reset",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 400/401', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 401]);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('message');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"reset-token-from-email\",\n  \"email\": \"user@example.com\",\n  \"password\": \"NewSecurePassword123!\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/password-reset/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email",
+                "password-reset",
+                "verify"
+              ]
+            },
+            "description": "Complete password reset. Verifies token and updates password. Also supports GET method for email links."
+          },
+          "response": []
         }
       ],
       "description": "Email/password authentication endpoints"
@@ -1373,6 +1481,233 @@
         }
       ],
       "description": "OAuth authentication endpoints"
+    },
+    {
+      "name": "MFA (Multi-Factor Authentication)",
+      "item": [
+        {
+          "name": "Enable MFA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 400/403', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 403, 401]);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('secret');",
+                  "    pm.expect(j).to.have.property('qrCode');",
+                  "    pm.expect(j).to.have.property('backupCodes');",
+                  "    if (j.secret) pm.environment.set('mfaSecret', j.secret);",
+                  "    if (j.backupCodes) pm.environment.set('mfaBackupCodes', JSON.stringify(j.backupCodes));",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/mfa/enable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "mfa",
+                "enable"
+              ]
+            },
+            "description": "Generate TOTP secret and QR code for MFA setup. Requires authentication. Scan QR code with authenticator app."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify MFA Setup",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 400/401', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 401]);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('message');",
+                  "    pm.expect(j).to.have.property('backupCodes');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/mfa/verify-setup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "mfa",
+                "verify-setup"
+              ]
+            },
+            "description": "Verify TOTP code during MFA setup. Enter code from authenticator app. Requires authentication."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify MFA (Login)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 400/401', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 401]);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('accessToken');",
+                  "    if (j.accessToken) pm.environment.set('accessToken', j.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"code\": \"123456\",\n  \"email\": \"user@example.com\",\n  \"userId\": \"user-id-from-login\",\n  \"tenantId\": \"tenant-id-from-login\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/mfa/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "mfa",
+                "verify"
+              ]
+            },
+            "description": "Verify MFA code during login. Called after initial authentication if MFA is enabled. Can use TOTP code or backup code."
+          },
+          "response": []
+        },
+        {
+          "name": "Disable MFA",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 400/401', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 400, 401]);",
+                  "});",
+                  "if (pm.response.code === 200) {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('message');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"password\": \"your-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/mfa/disable",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "mfa",
+                "disable"
+              ]
+            },
+            "description": "Disable MFA for the authenticated user. Requires password verification for security. Requires authentication."
+          },
+          "response": []
+        }
+      ],
+      "description": "Multi-Factor Authentication (MFA) endpoints. TOTP support with QR codes and backup codes."
     }
   ],
   "variable": [
@@ -1413,6 +1748,21 @@
     },
     {
       "key": "oauthState",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mfaSecret",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "mfaBackupCodes",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "passwordResetToken",
       "value": "",
       "type": "string"
     }

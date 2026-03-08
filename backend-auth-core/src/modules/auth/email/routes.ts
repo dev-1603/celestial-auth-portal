@@ -17,16 +17,24 @@ import { verifyEmailOTP } from './otp-verify.handler';
 import { logout } from './logout.handler';
 import { getMe } from './me.handler';
 import { refreshToken } from './refresh.handler';
+import { requestPasswordReset } from './password-reset-request.handler';
+import { completePasswordReset } from './password-reset-complete.handler';
 import { authenticate } from '../../../middleware/authenticate';
+import { createLoginRateLimiter, createOTPSendRateLimiter, createPasswordResetRateLimiter } from '../../../middleware/rateLimit';
 
 export const emailAuthRouter = Router();
 
-// Email/password login
-emailAuthRouter.post('/login', loginWithEmailPassword);
+// Email/password login (with rate limiting)
+emailAuthRouter.post('/login', createLoginRateLimiter(), loginWithEmailPassword);
 
-// Email OTP
-emailAuthRouter.post('/otp/send', sendEmailOTP);
+// Email OTP (with rate limiting)
+emailAuthRouter.post('/otp/send', createOTPSendRateLimiter(), sendEmailOTP);
 emailAuthRouter.post('/otp/verify', verifyEmailOTP);
+
+// Password reset (with rate limiting)
+emailAuthRouter.post('/password-reset/request', createPasswordResetRateLimiter(), requestPasswordReset);
+emailAuthRouter.post('/password-reset/verify', completePasswordReset);
+emailAuthRouter.get('/password-reset/verify', completePasswordReset); // Support GET for email links
 
 // Session management
 emailAuthRouter.post('/logout', logout);

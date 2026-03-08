@@ -9,11 +9,12 @@
 import { Router } from 'express'
 import { sendMagicLink } from './send.handler'
 import { verifyMagicLink } from './verify.handler'
+import { createMagicLinkRateLimiter } from '../../../middleware/rateLimit'
 
 export const magicLinkRouter = Router()
 
-// Send magic link
-magicLinkRouter.post('/send', sendMagicLink)
+// Send magic link (with rate limiting)
+magicLinkRouter.post('/send', createMagicLinkRateLimiter(), sendMagicLink)
 
 // Verify magic link (supports both GET for browser links and POST for API)
 magicLinkRouter.get('/verify', verifyMagicLink)

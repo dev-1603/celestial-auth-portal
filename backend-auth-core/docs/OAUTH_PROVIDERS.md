@@ -2,9 +2,9 @@
 
 ## Supported Providers
 
-The OAuth service now supports **15 OAuth providers**:
+The OAuth service now supports **16 OAuth providers**:
 
-### Currently Implemented (15 providers)
+### Currently Implemented (16 providers)
 
 1. **Google** - OAuth2 + OpenID Connect
 2. **GitHub** - OAuth2
