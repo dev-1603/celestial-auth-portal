@@ -12,6 +12,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express';
+import { getAuthConfig } from '../../../config/auth-config.loader';
 import { findAuthIdentityWithUser } from '../../../repositories/auth-identity.repository';
 import { findGlobalUserById } from '../../../repositories/user.repository';
 import { verifyUserPassword, buildLoginTokens } from '../../../services/token.service';
@@ -32,7 +33,7 @@ export const loginWithEmailPassword = async (
             return;
         }
 
-        // Find AuthIdentity by email provider
+        // Find AuthIdentity by email provider (includes user with passwordHash and memberships)
         const authIdentity = await findAuthIdentityWithUser('email', email);
 
         if (!authIdentity || !authIdentity.user) {
@@ -40,10 +41,9 @@ export const loginWithEmailPassword = async (
             return;
         }
 
-        // Get full user to access passwordHash
-        const user = await findGlobalUserById(authIdentity.user.id);
+        const user = authIdentity.user;
 
-        if (!user || !user.passwordHash) {
+        if (!user.passwordHash) {
             res.status(401).json({ error: 'Invalid credentials' });
             return;
         }
@@ -56,16 +56,26 @@ export const loginWithEmailPassword = async (
             return;
         }
 
-        // Get tenant info (from authIdentity or lookup)
+        // Check email verification requirement
+        const config = getAuthConfig();
+        if (config.requireVerifiedEmail === true && !user.isVerified) {
+            res.status(403).json({ error: 'Email not verified. Please verify your email before signing in.' });
+            return;
+        }
+
+        // Get tenant info from authIdentity (already loaded with memberships)
         const tenantId = authIdentity.user.tenantId;
         const tenantSlug = authIdentity.user.tenantSlug;
 
-        // Determine role (simplified for now - can be enhanced later)
+        // Determine role from tenant link (already loaded in memberships)
         let role: GlobalRole = 'USER';
         if (tenantId) {
-            const tenantLink = await findTenantUserLink(user.id, tenantId);
-            // Role determination logic can be enhanced here
-            // For now, default to USER
+            // Access memberships from the original identity (before transformation)
+            const memberships = (authIdentity as any).user?.memberships || [];
+            const tenantLink = memberships.find((m: any) => m.tenantId === tenantId);
+            if (tenantLink?.isTenantOwner) {
+                role = 'OWNER';
+            }
         }
 
         // Build JWT payload

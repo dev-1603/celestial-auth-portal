@@ -14,7 +14,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express'
-import { getMethodConfig, isMethodEnabled } from '../../../config/auth-config.loader'
+import { getAuthConfig, getMethodConfig, isMethodEnabled } from '../../../config/auth-config.loader'
 import {
   findActiveVerificationCode,
   verifyVerificationCode,
@@ -23,6 +23,7 @@ import {
 import { findAuthIdentityWithUser, createAuthIdentity } from '../../../repositories/auth-identity.repository'
 import { findTenantUserLink, createGlobalUser } from '../../../repositories/user.repository'
 import { buildLoginTokens } from '../../../services/token.service'
+import { prisma } from '../../../lib/prisma'
 import type { JWTPayload } from '../../../lib/jwt'
 import type { GlobalRole } from '../../../lib/jwt'
 
@@ -76,15 +77,39 @@ export const verifyMagicLink = async (
 
     // If user doesn't exist and signup is allowed, create user
     if (!authIdentity) {
-      const config = getMethodConfig('magic_link')
-      const allowSignup = config.allowSignup !== false // Default to true if not specified
+      const authConfig = getAuthConfig()
+      const methodConfig = getMethodConfig('magic_link')
+      const allowSignup = methodConfig.allowSignup !== false // Default to true if not specified
+
+      // Enforce signupMode
+      const signupMode = authConfig.signupMode || 'open'
+      if (signupMode === 'closed') {
+        res.status(403).json({ error: 'New user signup is not allowed' })
+        return
+      }
+
+      if (signupMode === 'invite_only') {
+        // Check for valid invitation
+        const invitation = await prisma.invitation.findFirst({
+          where: {
+            email: email.toLowerCase(),
+            accepted: false,
+            expiresAt: { gt: new Date() },
+          },
+        })
+
+        if (!invitation) {
+          res.status(403).json({ error: 'Signup requires a valid invitation' })
+          return
+        }
+      }
 
       if (!allowSignup) {
         res.status(404).json({ error: 'User not found' })
         return
       }
 
-      // Create new user
+      // Create new user (isVerified defaults to false)
       const newUser = await createGlobalUser({
         email,
         passwordHash: null, // No password for magic link signup
@@ -108,6 +133,14 @@ export const verifyMagicLink = async (
     }
 
     const user = authIdentity.user
+
+    // Check email verification requirement (for existing users)
+    const authConfig = getAuthConfig()
+    if (authConfig.requireVerifiedEmail === true && !user.isVerified) {
+      res.status(403).json({ error: 'Email not verified. Please verify your email before signing in.' })
+      return
+    }
+
     const tenantId = user.tenantId || ''
     const tenantSlug = user.tenantSlug
 

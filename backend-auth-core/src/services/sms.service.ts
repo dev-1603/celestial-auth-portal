@@ -18,6 +18,7 @@
  */
 
 import { env } from '../config/env.config'
+import { logger } from '../lib/logger'
 
 export interface SMSOptions {
   to: string // E.164 format phone number (e.g., +1234567890)
@@ -35,13 +36,11 @@ export interface SMSProvider {
  */
 class ConsoleProvider implements SMSProvider {
   async sendSMS(options: SMSOptions): Promise<void> {
-    console.log('[SMS Console Provider]')
-    console.log(`To: ${options.to}`)
-    console.log(`Message: ${options.message}`)
-    if (options.from) {
-      console.log(`From: ${options.from}`)
-    }
-    console.log('---')
+    logger.info('SMS sent (Console Provider)', {
+      to: options.to,
+      message: options.message,
+      ...(options.from && { from: options.from }),
+    })
   }
 }
 
@@ -115,7 +114,7 @@ export async function sendSMS(options: SMSOptions): Promise<void> {
   try {
     await cachedProvider.sendSMS(options)
   } catch (error: any) {
-    console.error('Failed to send SMS:', error)
+    logger.error('Failed to send SMS', { error: error?.message ?? error })
     throw new Error(`SMS sending failed: ${error.message}`)
   }
 }

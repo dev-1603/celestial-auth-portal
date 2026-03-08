@@ -13,6 +13,7 @@
  */
 
 import { env } from '../config/env.config'
+import { logger } from '../lib/logger'
 
 export interface EmailOptions {
   to: string
@@ -117,19 +118,15 @@ class SendGridProvider implements EmailProvider {
  */
 class ConsoleProvider implements EmailProvider {
   async sendEmail(options: EmailOptions): Promise<void> {
-    console.log('='.repeat(60))
-    console.log('📧 EMAIL (Console Provider - Development Mode)')
-    console.log('='.repeat(60))
-    console.log(`To: ${options.to}`)
-    console.log(`From: ${options.from || 'noreply@example.com'}`)
-    console.log(`Subject: ${options.subject}`)
-    console.log('---')
-    if (options.text) {
-      console.log(options.text)
-    } else if (options.html) {
-      console.log(options.html.replace(/<[^>]*>/g, '')) // Strip HTML for console
-    }
-    console.log('='.repeat(60))
+    logger.info('Email sent (Console Provider)', {
+      to: options.to,
+      from: options.from || 'noreply@example.com',
+      subject: options.subject,
+      // Only log body in development
+      ...(process.env.NODE_ENV === 'development' && {
+        text: options.text || (options.html ? options.html.replace(/<[^>]*>/g, '') : undefined),
+      }),
+    })
   }
 }
 
@@ -144,12 +141,12 @@ function getEmailProvider(): EmailProvider {
     case 'smtp':
       // Validate SMTP config
       if (!env.SMTP_HOST || !env.SMTP_USER || !env.SMTP_PASS) {
-        if (env.NODE_ENV === 'development') {
-          console.warn(
-            '⚠️  SMTP not configured. Using console provider. Set SMTP_HOST, SMTP_USER, SMTP_PASS for production.',
-          )
-          return new ConsoleProvider()
-        }
+      if (env.NODE_ENV === 'development') {
+        logger.warn(
+          'SMTP not configured. Using console provider. Set SMTP_HOST, SMTP_USER, SMTP_PASS for production.',
+        )
+        return new ConsoleProvider()
+      }
         throw new Error('SMTP configuration required: SMTP_HOST, SMTP_USER, SMTP_PASS')
       }
       return new NodemailerProvider()
@@ -181,7 +178,7 @@ export async function sendEmail(options: EmailOptions): Promise<void> {
   try {
     await emailProvider.sendEmail(options)
   } catch (error: any) {
-    console.error('Failed to send email:', error)
+    logger.error('Failed to send email', { error: error?.message ?? error })
     throw new Error(`Email sending failed: ${error.message}`)
   }
 }

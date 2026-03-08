@@ -20,7 +20,7 @@ import { refreshToken } from './refresh.handler';
 import { requestPasswordReset } from './password-reset-request.handler';
 import { completePasswordReset } from './password-reset-complete.handler';
 import { authenticate } from '../../../middleware/authenticate';
-import { createLoginRateLimiter, createOTPSendRateLimiter, createPasswordResetRateLimiter } from '../../../middleware/rateLimit';
+import { createLoginRateLimiter, createOTPSendRateLimiter, createPasswordResetRateLimiter, createIPRateLimiter } from '../../../middleware/rateLimit';
 
 export const emailAuthRouter = Router();
 
@@ -36,7 +36,7 @@ emailAuthRouter.post('/password-reset/request', createPasswordResetRateLimiter()
 emailAuthRouter.post('/password-reset/verify', completePasswordReset);
 emailAuthRouter.get('/password-reset/verify', completePasswordReset); // Support GET for email links
 
-// Session management
-emailAuthRouter.post('/logout', logout);
-emailAuthRouter.post('/refresh', refreshToken);
+// Session management (with rate limiting)
+emailAuthRouter.post('/logout', createIPRateLimiter(), logout);
+emailAuthRouter.post('/refresh', createIPRateLimiter(), refreshToken);
 emailAuthRouter.get('/me', authenticate, getMe);
