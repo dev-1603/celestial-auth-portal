@@ -25,17 +25,28 @@
 
 ## What Needs to Be Done Manually
 
-### 1. Run Database Migration
+**Both steps can be run from your local machine** (or any environment with database access).
 
-**Important:** The migration requires a database connection. You need to:
+### Prerequisites
 
-1. Ensure your `.env` file has:
-   ```
-   DATABASE_URL=postgresql://...
-   DIRECT_URL=postgresql://...
-   ```
+Ensure your `.env` file has database connection:
+```env
+DATABASE_URL=postgresql://...  # Connection string to your database
+DIRECT_URL=postgresql://...    # Direct connection (for migrations)
+```
 
-2. Run the migration:
+### 1. Run Database Migration (Local or Server)
+
+**Where to run:** Any machine with:
+- Database network access (can connect to DATABASE_URL)
+- Node.js and npm installed
+- `.env` file configured
+
+**Steps:**
+
+1. Navigate to `backend-auth-core` directory
+2. Ensure `.env` has `DATABASE_URL` and `DIRECT_URL`
+3. Run the migration:
    ```bash
    npm run db:migrate
    ```
@@ -45,20 +56,40 @@
    - Apply the migration to your database
    - Create the `AuthIdentity` and `VerificationCode` tables
 
-3. **Name the migration:** When prompted, use: `add_auth_identity_and_verification_code`
+4. **Name the migration:** When prompted, use: `add_auth_identity_and_verification_code`
 
-### 2. Run Backfill Script
+**Note:** If running locally, ensure your local machine can reach the database (VPN, network access, etc.)
 
-After the migration is applied, backfill existing users:
+### 2. Run Backfill Script (Local or Server)
 
-```bash
-npm run db:backfill
-```
+**Where to run:** Same as migration - any machine with database access
+
+**Steps:**
+
+1. Ensure migration from Step 1 is complete
+2. Run the backfill:
+   ```bash
+   npm run db:backfill
+   ```
 
 This will:
 - Find all `GlobalUser` records with email addresses
 - Create corresponding `AuthIdentity` records
-- Skip users that already have AuthIdentity (idempotent)
+- Skip users that already have AuthIdentity (idempotent - safe to run multiple times)
+
+**Output example:**
+```
+Starting AuthIdentity backfill...
+Found 10 users to backfill
+  ✓ Created AuthIdentity for user1@example.com
+  ✓ Created AuthIdentity for user2@example.com
+  ...
+
+Backfill complete:
+  Created: 10
+  Skipped: 0
+  Errors: 0
+```
 
 ### 3. Verify Migration
 
