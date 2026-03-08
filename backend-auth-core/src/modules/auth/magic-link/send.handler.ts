@@ -22,6 +22,7 @@ import {
 import { findAuthIdentityByProvider } from '../../../repositories/auth-identity.repository'
 import { sendEmail } from '../../../services/email.service'
 import { env } from '../../../config/env.config'
+import { logger } from '../../../lib/logger'
 import * as crypto from 'crypto'
 
 /**
@@ -118,11 +119,9 @@ export const sendMagicLink = async (
         text: `Sign in to your account: ${magicLinkUrl}\n\nThis link will expire in ${expiryMinutes} minutes.\n\nIf you didn't request this link, please ignore this email.`,
       })
     } catch (error: any) {
-      // Log error but don't fail the request (token is already stored)
-      console.error('Failed to send magic link email:', error)
-      // In development, still log the link
+      logger.error('Failed to send magic link email', { error: error?.message ?? error })
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[DEV] Magic link for ${email}: ${magicLinkUrl}`)
+        logger.debug('Magic link for development', { email, magicLinkUrl })
       }
     }
 

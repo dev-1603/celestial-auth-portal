@@ -14,6 +14,7 @@
  */
 import type { Request, Response, NextFunction } from 'express'
 import { StatusCodes, getReasonPhrase } from 'http-status-codes'
+import { logger } from '../lib/logger'
 import { AppError, isAppError } from '../lib/errors'
 import { resolveStatusAndMessage } from '../lib/httpStatusResolver'
 
@@ -90,15 +91,11 @@ export function errorHandler(err: ErrorLike, req: Request, res: Response, _next:
   const message = env === 'development' ? ((isApp ? (normalized as AppError).message : (err as any)?.message) ?? getReasonPhrase(status)) : publicMessage
   const details = isApp ? (normalized as AppError).details : undefined
 
-  // Logging: verbose in dev; structured JSON in prod (no external deps)
+  // Logging via Winston (structured in prod, readable in dev)
   if (env === 'development') {
-    // print full error for developer experience
-    // eslint-disable-next-line no-console
-    console.error('Error caught by errorHandler:', err)
+    logger.error('Error caught by errorHandler', buildLogPayload(err, req))
   } else {
-    // minimal structured JSON log ready for log aggregation
-    // eslint-disable-next-line no-console
-    console.error(JSON.stringify(buildLogPayload(err, req)))
+    logger.error('Request error', buildLogPayload(err, req))
   }
 
   // Build safe response
@@ -113,9 +110,7 @@ export function errorHandler(err: ErrorLike, req: Request, res: Response, _next:
     res.status(typeof status === 'number' ? status : StatusCodes.INTERNAL_SERVER_ERROR)
     res.json(responseBody)
   } catch (writeErr) {
-    // Fallback: if response writing fails, log and end process
-    // eslint-disable-next-line no-console
-    console.error('Failed to send error response', writeErr)
+    logger.error('Failed to send error response', { error: writeErr })
     res.status(StatusCodes.INTERNAL_SERVER_ERROR).send(getReasonPhrase(StatusCodes.INTERNAL_SERVER_ERROR))
   }
 }
@@ -129,12 +124,11 @@ export function registerProcessHandlers() {
     ; (global as any).__errorHandlersRegistered = true
 
   process.on('unhandledRejection', (reason) => {
-    // Log and attempt graceful exit. In production a supervisor (systemd/k8s)
-    // should restart the process. Keep logs structured so SRE can triage.
-    // eslint-disable-next-line no-console
-    console.error(JSON.stringify({ timestamp: new Date().toISOString(), level: 'fatal', reason: String(reason) }))
-    // Optionally perform graceful shutdown here (close DB, flush logs) then exit.
-    // We don't force-exit immediately to allow app-specific cleanup to run.
+    logger.error('Unhandled promise rejection', {
+      level: 'fatal',
+      reason: String(reason),
+      timestamp: new Date().toISOString(),
+    })
   })
 }
 

@@ -42,7 +42,8 @@
     "qrcode": "^1.5.4",
     "speakeasy": "^2.0.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "winston": "^3.17.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",

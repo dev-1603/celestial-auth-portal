@@ -1,6 +1,7 @@
 
 import type { Response, NextFunction } from 'express'
 import type { AuthenticatedRequest } from '../../../middleware/authenticate'
+import { logger } from '../../../lib/logger'
 import { AppError, isAppError, AuthError, ErrorCode } from '../../../lib/errors'
 import { StatusCodes } from 'http-status-codes'
 
@@ -28,9 +29,7 @@ export const getMe = (
         })
     } catch (err: unknown) {
         if (res.headersSent) {
-            // response already started; log and stop
-            // eslint-disable-next-line no-console
-            console.error('Error after response sent', err)
+            logger.error('Error after response sent', { error: err })
             return
         }
 
