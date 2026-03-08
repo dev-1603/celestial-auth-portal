@@ -26,6 +26,12 @@
  *                 message:
  *                   type: string
  *                   example: Celestial Auth Core API
+ *       '404':
+ *         description: Not Found — route has no handler (e.g. wrong path or method)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RouteNotFoundResponse'
  */
 const root = true
 

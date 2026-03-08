@@ -62,6 +62,7 @@ async function backfillAuthIdentities() {
             userId: user.id,
             providerType: 'email',
             providerUserId: user.email,
+            authMethodType: 'PASSWORD',
             email: user.email,
           },
         })
