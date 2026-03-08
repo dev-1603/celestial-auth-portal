@@ -4,9 +4,9 @@
  * Unit tests for the HTTP status/message resolver.
  */
 import { describe, it, expect } from 'vitest'
-import resolveStatusAndMessage from './httpStatusResolver'
+import resolveStatusAndMessage from '../httpStatusResolver'
 import { StatusCodes } from 'http-status-codes'
-import { ErrorCode } from './errors'
+import { ErrorCode } from '../errors'
 
 describe('httpStatusResolver', () => {
   it('resolves known ErrorCode to configured status and message', () => {
