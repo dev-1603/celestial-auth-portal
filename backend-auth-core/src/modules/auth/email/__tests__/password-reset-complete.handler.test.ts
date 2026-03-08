@@ -3,6 +3,21 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+// Mock env config
+vi.mock('../../../../config/env.config', () => ({
+  env: {
+    DATABASE_URL: 'postgresql://test',
+    DIRECT_URL: 'postgresql://test',
+    NODE_ENV: 'test',
+  },
+}))
+
+// Mock prisma
+vi.mock('../../../../lib/prisma', () => ({
+  prisma: {},
+}))
+
 import type { Request, Response, NextFunction } from 'express'
 import { completePasswordReset } from '../password-reset-complete.handler'
 import * as passwordResetRepository from '../../../../repositories/password-reset.repository'
@@ -13,7 +28,11 @@ import * as authConfigLoader from '../../../../config/auth-config.loader'
 vi.mock('../../../../repositories/password-reset.repository')
 vi.mock('../../../../repositories/user.repository')
 vi.mock('../../../../lib/bcrypt')
-vi.mock('../../../../config/auth-config.loader')
+vi.mock('../../../../config/auth-config.loader', () => ({
+  getAuthConfig: vi.fn(() => ({ passwordPolicy: { minLength: 8 } })),
+  isMethodEnabled: vi.fn(() => true),
+  getMethodConfig: vi.fn(() => ({})),
+}))
 
 describe('password-reset-complete.handler', () => {
   let req: Partial<Request>

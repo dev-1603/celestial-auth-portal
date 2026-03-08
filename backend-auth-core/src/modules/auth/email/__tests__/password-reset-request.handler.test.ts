@@ -3,6 +3,22 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest'
+
+// Mock env config
+vi.mock('../../../../config/env.config', () => ({
+  env: {
+    DATABASE_URL: 'postgresql://test',
+    DIRECT_URL: 'postgresql://test',
+    NODE_ENV: 'test',
+    API_URL: 'http://localhost:5001',
+  },
+}))
+
+// Mock prisma
+vi.mock('../../../../lib/prisma', () => ({
+  prisma: {},
+}))
+
 import type { Request, Response, NextFunction } from 'express'
 import { requestPasswordReset } from '../password-reset-request.handler'
 import * as userRepository from '../../../../repositories/user.repository'
@@ -12,9 +28,6 @@ import * as emailService from '../../../../services/email.service'
 vi.mock('../../../../repositories/user.repository')
 vi.mock('../../../../repositories/password-reset.repository')
 vi.mock('../../../../services/email.service')
-vi.mock('../../../../config/env.config', () => ({
-  env: { API_URL: 'http://localhost:5001' },
-}))
 
 describe('password-reset-request.handler', () => {
   let req: Partial<Request>
