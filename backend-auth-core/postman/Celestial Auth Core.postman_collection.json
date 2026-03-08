@@ -1,0 +1,344 @@
+{
+  "info": {
+    "name": "Celestial Auth Core",
+    "description": "Postman collection for Celestial Auth Core API - Multi-method authentication",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Email/Password Auth",
+      "item": [
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "login"]
+            },
+            "description": "Login with email and password. Returns access token and sets refresh token cookie."
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Invalid Credentials",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"wrong@example.com\",\n  \"password\": \"wrong-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "login"]
+            },
+            "description": "Test invalid credentials - should return 401"
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Missing Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/login",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "login"]
+            },
+            "description": "Test missing password - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/refresh",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "refresh"]
+            },
+            "description": "Refresh access token using refresh token cookie. Cookie must be set from login."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Current User",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/me",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "me"]
+            },
+            "description": "Get current authenticated user info. Requires Bearer token."
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/logout",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "logout"]
+            },
+            "description": "Logout - clears refresh token cookie"
+          },
+          "response": []
+        }
+      ],
+      "description": "Email/password authentication endpoints"
+    },
+    {
+      "name": "Email OTP Auth",
+      "item": [
+        {
+          "name": "Send OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.otp) {",
+                  "        pm.environment.set('otpCode', jsonData.otp);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/otp/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "otp", "send"]
+            },
+            "description": "Send OTP code to email. In development, the code is returned in response."
+          },
+          "response": []
+        },
+        {
+          "name": "Send OTP - User Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"missing@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/otp/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "otp", "send"]
+            },
+            "description": "Test with non-existent user - should return 404"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"{{otpCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/otp/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "otp", "verify"]
+            },
+            "description": "Verify OTP code and login. Use OTP code from send response or email."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP - Invalid Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/otp/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "otp", "verify"]
+            },
+            "description": "Test with invalid OTP code - should return 401"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify OTP - Missing Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/otp/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "email", "otp", "verify"]
+            },
+            "description": "Test missing code - should return 400"
+          },
+          "response": []
+        }
+      ],
+      "description": "Email OTP authentication endpoints"
+    }
+  ],
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5001",
+      "type": "string"
+    }
+  ]
+}
