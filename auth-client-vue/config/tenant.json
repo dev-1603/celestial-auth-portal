@@ -1,0 +1,20 @@
+{
+    "id": "acme-corp",
+    "name": "Acme Corp",
+    "slug": "acme",
+    "domains": [
+        "acme.com"
+    ],
+    "tenantResolution": "subdomain",
+    "locales": [
+        "en-US"
+    ],
+    "primaryLocale": "en-US",
+    "timezone": "America/New_York",
+    "plan": "pro",
+    "status": "active",
+    "dataRegion": "us-east",
+    "compliance": [
+        "gdpr"
+    ]
+}
