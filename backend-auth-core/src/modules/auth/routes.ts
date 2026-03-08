@@ -16,6 +16,7 @@ import { isMethodEnabled } from '../../config/auth-config.loader'
 import { emailAuthRouter } from './email/routes'
 import { magicLinkRouter } from './magic-link/routes'
 import { phoneAuthRouter } from './phone/routes'
+import { oauthRouter } from './oauth/routes'
 
 const router = Router()
 
@@ -34,9 +35,9 @@ if (isMethodEnabled('phone_sms_otp')) {
   router.use('/phone', phoneAuthRouter)
 }
 
-// TODO: Add other method routers as they are implemented:
-// if (isMethodEnabled('oauth')) {
-//   router.use('/oauth', oauthRouter)
-// }
+// OAuth auth - mount if oauth is enabled
+if (isMethodEnabled('oauth')) {
+  router.use('/oauth', oauthRouter)
+}
 
 export default router

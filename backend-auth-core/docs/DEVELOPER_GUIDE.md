@@ -427,6 +427,113 @@ npm test -- src/modules/auth/phone/__tests__/otp-verify.handler.test.ts
 - Phone numbers are normalized to E.164 format automatically
 - In development mode, the OTP code is returned in the response for testing
 
+## Method 5: OAuth
+
+### Overview
+
+OAuth2/OIDC authentication via third-party providers (Google, GitHub, Microsoft, etc.). User authorizes with the provider, and the provider redirects back with an authorization code that is exchanged for user information.
+
+### Flow
+
+1. **Initiate**: User clicks "Sign in with {Provider}" → Frontend calls `/oauth/{provider}/initiate` → Backend generates CSRF state → Redirects to provider
+2. **Authorize**: User authorizes on provider's page → Provider redirects to `/oauth/{provider}/callback` with code and state
+3. **Callback**: Backend validates state → Exchanges code for access token → Fetches user info → Finds or creates user → Links OAuth account → Issues JWT → Redirects or returns JSON
+
+### Endpoints
+
+- `GET /api/v1/auth/oauth/providers` - Get list of enabled OAuth providers
+- `GET /api/v1/auth/oauth/{provider}/initiate` - Initiate OAuth flow (redirects to provider)
+- `GET /api/v1/auth/oauth/{provider}/callback` - Handle OAuth callback (called by provider)
+
+### Supported Providers
+
+- **Google** - OAuth2 with OpenID Connect
+- **GitHub** - OAuth2
+- **Microsoft** - OAuth2 with OpenID Connect
+
+### Config
+
+```json
+{
+  "enabledMethods": ["oauth"],
+  "methodsConfig": {
+    "oauth": {
+      "enabled": true,
+      "allowSignup": true,
+      "allowLinking": true
+    }
+  },
+  "providers": {
+    "oauth": [
+      {
+        "id": "google",
+        "enabled": true,
+        "displayName": "Google",
+        "logo": "/logos/google.svg"
+      },
+      {
+        "id": "github",
+        "enabled": true,
+        "displayName": "GitHub",
+        "logo": "/logos/github.svg"
+      }
+    ]
+  }
+}
+```
+
+**Config Options:**
+- `allowSignup`: Whether to create new users via OAuth (default: true)
+- `allowLinking`: Whether to link OAuth accounts to existing users by email (default: true)
+
+### Environment Variables
+
+For each provider, set:
+```bash
+# Google
+OAUTH_GOOGLE_CLIENT_ID=your_google_client_id
+OAUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# GitHub
+OAUTH_GITHUB_CLIENT_ID=your_github_client_id
+OAUTH_GITHUB_CLIENT_SECRET=your_github_client_secret
+
+# Microsoft
+OAUTH_MICROSOFT_CLIENT_ID=your_microsoft_client_id
+OAUTH_MICROSOFT_CLIENT_SECRET=your_microsoft_client_secret
+```
+
+### Testing
+
+**Unit tests:**
+```bash
+npm test -- src/modules/auth/oauth/__tests__/initiate.handler.test.ts
+npm test -- src/modules/auth/oauth/__tests__/callback.handler.test.ts
+```
+
+**Postman:**
+- Use "OAuth Auth" folder in the collection
+- Note: OAuth flow requires actual provider setup (client ID/secret)
+- Callback endpoint is called by provider, not directly testable via Postman
+
+### Implementation Files
+
+- Handlers: `src/modules/auth/oauth/initiate.handler.ts`, `callback.handler.ts`
+- Routes: `src/modules/auth/oauth/routes.ts`
+- Service: `src/services/oauth.service.ts` (OAuth abstraction)
+- Repository: `src/repositories/auth-identity.repository.ts` (reused)
+- Tests: `src/modules/auth/oauth/__tests__/*.test.ts`
+- Swagger: `src/docs/paths.auth.oauth.ts`
+
+### Notes
+
+- **CSRF Protection**: State parameter stored in httpOnly cookie, validated in callback
+- **Account Linking**: OAuth accounts can be linked to existing users by email
+- **Provider-Specific**: Each provider has different user info structure (normalized by service)
+- **GitHub Email**: GitHub may not return email in user info - service fetches from emails endpoint if needed
+- **Redirect Support**: Can redirect to frontend after successful login
+- **Multiple Providers**: Users can link multiple OAuth providers to the same account
+
 ## Database Migrations
 
 ### Running Migrations

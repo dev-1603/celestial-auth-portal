@@ -1260,6 +1260,119 @@
         }
       ],
       "description": "Phone OTP authentication endpoints"
+    },
+    {
+      "name": "OAuth Auth",
+      "item": [
+        {
+          "name": "Get OAuth Providers",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/oauth/providers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "oauth",
+                "providers"
+              ]
+            },
+            "description": "Get list of enabled OAuth providers"
+          },
+          "response": []
+        },
+        {
+          "name": "Initiate Google OAuth",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/oauth/google/initiate?redirect=http://localhost:3000/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "oauth",
+                "google",
+                "initiate"
+              ],
+              "query": [
+                {
+                  "key": "redirect",
+                  "value": "http://localhost:3000/app"
+                }
+              ]
+            },
+            "description": "Initiate Google OAuth flow"
+          },
+          "response": []
+        },
+        {
+          "name": "Initiate GitHub OAuth",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/oauth/github/initiate",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "oauth",
+                "github",
+                "initiate"
+              ]
+            },
+            "description": "Initiate GitHub OAuth flow"
+          },
+          "response": []
+        },
+        {
+          "name": "OAuth Callback (Google)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/oauth/google/callback?code={{oauthCode}}&state={{oauthState}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "oauth",
+                "google",
+                "callback"
+              ],
+              "query": [
+                {
+                  "key": "code",
+                  "value": "{{oauthCode}}"
+                },
+                {
+                  "key": "state",
+                  "value": "{{oauthState}}"
+                }
+              ]
+            },
+            "description": "Handle OAuth callback from Google"
+          },
+          "response": []
+        }
+      ],
+      "description": "OAuth authentication endpoints"
     }
   ],
   "variable": [
@@ -1290,6 +1403,16 @@
     },
     {
       "key": "phoneOtpCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "oauthCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "oauthState",
       "value": "",
       "type": "string"
     }
