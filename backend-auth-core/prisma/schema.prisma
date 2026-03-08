@@ -26,7 +26,6 @@ model GlobalUser {
   appAccess     AppAccess[]
   passwordResets PasswordReset[]
   invitations   Invitation[]   @relation("InvitedUser")
-  authIdentities AuthIdentity[]
 }
 
 model Tenant {
@@ -238,41 +237,4 @@ model AuthCode {
   client      ClientApp @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([clientId])
-}
-
-// ─────────────────────────────────────────
-// MULTI-METHOD AUTH MODELS
-// ─────────────────────────────────────────
-
-model AuthIdentity {
-  id             String   @id @default(cuid())
-  userId         String
-  providerType   String   // e.g. "email", "google", "github", "magic_link", "phone"
-  providerUserId String   // e.g. Google sub, or email for providerType=email, or phone E.164
-  email          String?  // optional; from provider or for email identity
-  displayName    String?
-  metadata       Json?    // provider-specific claims
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
-
-  user           GlobalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([providerType, providerUserId])
-  @@index([userId])
-}
-
-model VerificationCode {
-  id         String   @id @default(cuid())
-  channel    String   // "email" | "phone"
-  target     String   // email address or E.164 phone
-  codeHash   String   // hashed OTP or token
-  purpose    String   // "login" | "signup" | "mfa" | "magic_link"
-  expiresAt DateTime
-  used      Boolean  @default(false)
-  attempts  Int      @default(0)
-  userId    String?  // set when claimed (e.g. magic link used)
-  createdAt  DateTime @default(now())
-
-  @@index([channel, target, purpose])
-  @@index([expiresAt])
 }
