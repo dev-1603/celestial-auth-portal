@@ -11,6 +11,7 @@
     "db:studio": "prisma studio",
     "db:migrate": "prisma migrate dev",
     "db:generate": "prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
     "db:backfill": "tsx scripts/backfill-auth-identity.ts",
     "test": "vitest",
     "test:run": "vitest run",
