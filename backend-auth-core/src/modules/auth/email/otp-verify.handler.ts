@@ -14,7 +14,7 @@
  */
 
 import type { Request, Response, NextFunction } from 'express'
-import { getMethodConfig, isMethodEnabled } from '../../../config/auth-config.loader'
+import { getAuthConfig, getMethodConfig, isMethodEnabled } from '../../../config/auth-config.loader'
 import {
   findActiveVerificationCode,
   verifyVerificationCode,
@@ -91,6 +91,14 @@ export const verifyEmailOTP = async (
     }
 
     const user = authIdentity.user
+
+    // Check email verification requirement
+    const authConfig = getAuthConfig()
+    if (authConfig.requireVerifiedEmail === true && !user.isVerified) {
+      res.status(403).json({ error: 'Email not verified. Please verify your email before signing in.' })
+      return
+    }
+
     const tenantId = user.tenantId || ''
     const tenantSlug = user.tenantSlug
 

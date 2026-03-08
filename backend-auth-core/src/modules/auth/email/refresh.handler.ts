@@ -2,10 +2,10 @@
 
 import type { Request, Response, NextFunction } from 'express'
 import { verifyRefreshToken } from '../../../lib/jwt'
-import { findGlobalUserById, findTenantUserLink } from '../../../repositories/user.repository'
+import { findUserWithTenantLinkForRefresh } from '../../../repositories/user.repository'
 import { buildLoginTokens } from '../../../services/token.service'
 import type { JWTPayload, GlobalRole } from '../../../lib/jwt'
- import { StatusCodes } from 'http-status-codes'
+import { StatusCodes } from 'http-status-codes'
 
 export const refreshToken = async (
     req: Request,
@@ -31,26 +31,23 @@ export const refreshToken = async (
             return
         }
 
-        // 3. Fetch full user from DB to rebuild complete JWTPayload
-        const user = await findGlobalUserById(decoded.userId)
+        // 3. Fetch user with tenant link in a single query
+        const result = await findUserWithTenantLinkForRefresh(decoded.userId, decoded.tenantId)
 
-        if (!user) {
+        if (!result || !result.user) {
             res.status(StatusCodes.UNAUTHORIZED).json({ error: 'User not found' })
             return
         }
 
-        // 3.5 Ensure the user's email is verified before issuing tokens
-        const emailVerified =
-            (user as any).isVerified ?? (user as any).isEmailVerified ?? true
+        const { user, tenantLink } = result
 
-        if (!emailVerified) {
+        // 3.5 Ensure the user's email is verified before issuing tokens
+        if (!user.isVerified) {
             res.status(StatusCodes.FORBIDDEN).json({ error: 'Email not verified' })
             return
         }
 
         // 4. Determine role and rebuild full JWTPayload
-        const tenantLink = await findTenantUserLink(decoded.userId, decoded.tenantId)
-
         let role: GlobalRole = 'USER'
         if ((user as any).isSuperAdmin) {
             role = 'ADMIN'

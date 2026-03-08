@@ -12,7 +12,8 @@
  * etc.
  */
 import { Router } from 'express'
-import { isMethodEnabled, isMFAEnabled } from '../../config/auth-config.loader'
+import { isMethodEnabledToMount, isMFAEnabled } from '../../config/auth-config.loader'
+import { createIPRateLimiter } from '../../middleware/rateLimit'
 import { emailAuthRouter } from './email/routes'
 import { magicLinkRouter } from './magic-link/routes'
 import { phoneAuthRouter } from './phone/routes'
@@ -21,23 +22,26 @@ import { mfaRouter } from './mfa/routes'
 
 const router = Router()
 
-// Email/password auth - mount if email_password is enabled
-if (isMethodEnabled('email_password')) {
+// Apply global IP rate limiter to all auth endpoints
+router.use(createIPRateLimiter())
+
+// Email/password auth - mount if email_password is enabled (checks both enabledMethods and methodsConfig)
+if (isMethodEnabledToMount('email_password')) {
   router.use('/email', emailAuthRouter)
 }
 
-// Magic link auth - mount if magic_link is enabled
-if (isMethodEnabled('magic_link')) {
+// Magic link auth - mount if magic_link is enabled (checks both enabledMethods and methodsConfig)
+if (isMethodEnabledToMount('magic_link')) {
   router.use('/magic-link', magicLinkRouter)
 }
 
-// Phone OTP auth - mount if phone_sms_otp is enabled
-if (isMethodEnabled('phone_sms_otp')) {
+// Phone OTP auth - mount if phone_sms_otp is enabled (checks both enabledMethods and methodsConfig)
+if (isMethodEnabledToMount('phone_sms_otp')) {
   router.use('/phone', phoneAuthRouter)
 }
 
-// OAuth auth - mount if oauth is enabled
-if (isMethodEnabled('oauth')) {
+// OAuth auth - mount if oauth is enabled (checks both enabledMethods and methodsConfig)
+if (isMethodEnabledToMount('oauth')) {
   router.use('/oauth', oauthRouter)
 }
 

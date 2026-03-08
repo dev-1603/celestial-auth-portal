@@ -102,7 +102,50 @@ export const findTenantUserLink = async (
     return {
         tenantId: link.tenantId,
         tenantSlug: link.tenant?.slug ?? undefined,
-        isTenantOwner: (link as any).isTenantOwner ?? false,
-        status: (link as any).status ?? '',
+        isTenantOwner: link.isTenantOwner ?? false,
+        status: '', // Reserved for future use
+    }
+}
+
+/**
+ * Find user with tenant link in a single query (optimized for refresh)
+ */
+export interface UserWithTenantLink {
+    user: GlobalUser
+    tenantLink: TenantUserLinkInfo | null
+}
+
+export const findUserWithTenantLinkForRefresh = async (
+    userId: string,
+    tenantId: string,
+): Promise<UserWithTenantLink | null> => {
+    const user = await prisma.globalUser.findUnique({
+        where: { id: userId },
+        include: {
+            memberships: {
+                where: { tenantId },
+                include: {
+                    tenant: {
+                        select: { slug: true },
+                    },
+                },
+            },
+        },
+    })
+
+    if (!user) return null
+
+    const link = user.memberships[0] || null
+
+    return {
+        user,
+        tenantLink: link
+            ? {
+                  tenantId: link.tenantId,
+                  tenantSlug: link.tenant?.slug ?? undefined,
+                  isTenantOwner: link.isTenantOwner ?? false,
+                  status: '',
+              }
+            : null,
     }
 }

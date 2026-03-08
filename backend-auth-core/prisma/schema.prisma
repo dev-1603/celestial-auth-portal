@@ -44,11 +44,12 @@ model Tenant {
 }
 
 model TenantUserLink {
-  id        String           @id @default(cuid())
-  userId    String
-  tenantId  String
-  primary   Boolean          @default(false)
-  createdAt DateTime         @default(now())
+  id            String           @id @default(cuid())
+  userId        String
+  tenantId      String
+  primary       Boolean          @default(false)
+  isTenantOwner Boolean          @default(false)
+  createdAt     DateTime         @default(now())
 
   user      GlobalUser       @relation(fields: [userId], references: [id], onDelete: Cascade)
   tenant    Tenant           @relation(fields: [tenantId], references: [id], onDelete: Cascade)

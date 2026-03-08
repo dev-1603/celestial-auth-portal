@@ -21,6 +21,7 @@ import {
 } from '../../../repositories/verification-code.repository'
 import { findAuthIdentityByProvider } from '../../../repositories/auth-identity.repository'
 import { sendSMS } from '../../../services/sms.service'
+import { logger } from '../../../lib/logger'
 
 /**
  * Generate a random OTP code
@@ -126,11 +127,9 @@ export const sendPhoneOTP = async (
         from: fromNumber,
       })
     } catch (error: any) {
-      // Log error but don't fail the request (OTP is already stored)
-      console.error('Failed to send OTP SMS:', error)
-      // In development, still log the code
+      logger.error('Failed to send OTP SMS', { error: error?.message ?? error })
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[DEV] OTP for ${normalizedPhone}: ${otpCode}`)
+        logger.debug('OTP for development', { phone: normalizedPhone, otp: otpCode })
       }
     }
 
