@@ -332,6 +332,225 @@
         }
       ],
       "description": "Email OTP authentication endpoints"
+    },
+    {
+      "name": "Magic Link Auth",
+      "item": [
+        {
+          "name": "Send Magic Link",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.magicLink) {",
+                  "        pm.environment.set('magicLinkUrl', jsonData.magicLink);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/magic-link/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "magic-link", "send"]
+            },
+            "description": "Send magic link to email. In development, the link is returned in response."
+          },
+          "response": []
+        },
+        {
+          "name": "Send Magic Link - User Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"missing@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/magic-link/send",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "magic-link", "send"]
+            },
+            "description": "Test with non-existent user - should return 404"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Magic Link (GET)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200 || pm.response.code === 302) {",
+                  "    // Magic link verified",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify?token={{magicLinkToken}}&email=user@example.com&redirect=http://localhost:3000/app",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "magic-link", "verify"],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "{{magicLinkToken}}",
+                  "description": "Token from magic link email"
+                },
+                {
+                  "key": "email",
+                  "value": "user@example.com"
+                },
+                {
+                  "key": "redirect",
+                  "value": "http://localhost:3000/app",
+                  "description": "Optional redirect URL"
+                }
+              ]
+            },
+            "description": "Verify magic link via GET (browser click). Can redirect to frontend."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Magic Link (POST)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{magicLinkToken}}\",\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "magic-link", "verify"]
+            },
+            "description": "Verify magic link via POST (API). Use token from send response or email."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Magic Link - Invalid Token",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"invalid-token\",\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "magic-link", "verify"]
+            },
+            "description": "Test with invalid token - should return 401"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Magic Link - Missing Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "v1", "auth", "magic-link", "verify"]
+            },
+            "description": "Test missing token - should return 400"
+          },
+          "response": []
+        }
+      ],
+      "description": "Magic link authentication endpoints"
     }
   ],
   "variable": [
