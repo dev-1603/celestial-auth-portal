@@ -21,6 +21,7 @@ import {
 } from '../../../repositories/verification-code.repository'
 import { findAuthIdentityByProvider } from '../../../repositories/auth-identity.repository'
 import { sendEmail } from '../../../services/email.service'
+import { logger } from '../../../lib/logger'
 
 /**
  * Generate a random OTP code
@@ -102,11 +103,9 @@ export const sendEmailOTP = async (
         text: `Your OTP code is: ${otpCode}\n\nThis code will expire in ${expiryMinutes} minutes.\n\nIf you didn't request this code, please ignore this email.`,
       })
     } catch (error: any) {
-      // Log error but don't fail the request (OTP is already stored)
-      console.error('Failed to send OTP email:', error)
-      // In development, still log the code
+      logger.error('Failed to send OTP email', { error: error?.message ?? error })
       if (process.env.NODE_ENV === 'development') {
-        console.log(`[DEV] OTP for ${email}: ${otpCode}`)
+        logger.debug('OTP for development', { email, otp: otpCode })
       }
     }
 

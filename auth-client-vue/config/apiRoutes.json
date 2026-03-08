@@ -1,0 +1,44 @@
+{
+  "baseUrlFromEnv": "NUXT_PUBLIC_AUTH_API_URL",
+  "apiVersion": "v1",
+  "versionedPrefix": "/api/v1",
+  "unversioned": {
+    "root": "",
+    "health": "health",
+    "healthLive": "health/live",
+    "healthReady": "health/ready"
+  },
+  "auth": {
+    "email_password": {
+      "login": "auth/email/login",
+      "logout": "auth/email/logout",
+      "refresh": "auth/email/refresh",
+      "me": "auth/email/me",
+      "passwordResetRequest": "auth/email/password-reset/request",
+      "passwordResetVerify": "auth/email/password-reset/verify"
+    },
+    "email_otp": {
+      "send": "auth/email/otp/send",
+      "verify": "auth/email/otp/verify"
+    },
+    "phone_sms_otp": {
+      "send": "auth/phone/otp/send",
+      "verify": "auth/phone/otp/verify"
+    },
+    "oauth": {
+      "providers": "auth/oauth/providers",
+      "initiate": "auth/oauth/:provider/initiate",
+      "callback": "auth/oauth/:provider/callback"
+    },
+    "mfa": {
+      "enable": "auth/mfa/enable",
+      "verifySetup": "auth/mfa/verify-setup",
+      "verify": "auth/mfa/verify",
+      "disable": "auth/mfa/disable"
+    },
+    "magic_link": {
+      "send": "auth/magic-link/send",
+      "verify": "auth/magic-link/verify"
+    }
+  }
+}
