@@ -14,6 +14,7 @@
 import { Router } from 'express'
 import { isMethodEnabled } from '../../config/auth-config.loader'
 import { emailAuthRouter } from './email/routes'
+import { magicLinkRouter } from './magic-link/routes'
 
 const router = Router()
 
@@ -22,15 +23,17 @@ if (isMethodEnabled('email_password')) {
   router.use('/email', emailAuthRouter)
 }
 
+// Magic link auth - mount if magic_link is enabled
+if (isMethodEnabled('magic_link')) {
+  router.use('/magic-link', magicLinkRouter)
+}
+
 // TODO: Add other method routers as they are implemented:
 // if (isMethodEnabled('phone_sms_otp')) {
 //   router.use('/phone', phoneAuthRouter)
 // }
 // if (isMethodEnabled('oauth')) {
 //   router.use('/oauth', oauthRouter)
-// }
-// if (isMethodEnabled('magic_link')) {
-//   router.use('/magic-link', magicLinkRouter)
 // }
 
 export default router

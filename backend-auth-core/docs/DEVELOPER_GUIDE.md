@@ -276,6 +276,74 @@ npm test -- src/repositories/__tests__/verification-code.repository.test.ts
   - Can switch to SendGrid or other providers via `EMAIL_PROVIDER` env var
   - Development: Use `EMAIL_PROVIDER=console` to log emails instead of sending
 
+## Method 3: Magic Link
+
+### Overview
+
+Magic Link authentication. User requests a magic link sent to their email, clicks the link to verify, and is automatically logged in. No password or OTP code required.
+
+### Flow
+
+1. **Send Magic Link**: User requests magic link → Generate secure token → Hash and store in `VerificationCode` (purpose=magic_link) → Send email with link
+2. **Verify Magic Link**: User clicks link → Extract token and email from URL → Find active verification code → Verify token hash → Mark as used → Find or create user via AuthIdentity → Issue JWT → Redirect or return JSON
+
+### Endpoints
+
+- `POST /api/v1/auth/magic-link/send` - Send magic link to email
+- `GET /api/v1/auth/magic-link/verify?token=...&email=...` - Verify magic link (browser redirect)
+- `POST /api/v1/auth/magic-link/verify` - Verify magic link (API, returns JSON)
+
+### Config
+
+```json
+{
+  "enabledMethods": ["magic_link"],
+  "methodsConfig": {
+    "magic_link": {
+      "enabled": true,
+      "expiryMinutes": 20,
+      "allowSignup": true,
+      "allowedDomains": []
+    }
+  }
+}
+```
+
+**Config Options:**
+- `expiryMinutes`: How long the magic link is valid (default: 20)
+- `allowSignup`: Whether to create new users if they don't exist (default: true)
+- `allowedDomains`: Restrict to specific email domains (empty array = all domains)
+
+### Testing
+
+**Unit tests:**
+```bash
+npm test -- src/modules/auth/magic-link/__tests__/send.handler.test.ts
+npm test -- src/modules/auth/magic-link/__tests__/verify.handler.test.ts
+```
+
+**Postman:**
+- Use "Magic Link Auth" folder in the collection
+- Send magic link request → Copy the link from response (in dev mode) → Verify with GET request
+
+### Implementation Files
+
+- Handlers: `src/modules/auth/magic-link/send.handler.ts`, `verify.handler.ts`
+- Routes: `src/modules/auth/magic-link/routes.ts`
+- Repository: `src/repositories/verification-code.repository.ts` (reused from Email OTP)
+- Tests: `src/modules/auth/magic-link/__tests__/*.test.ts`
+- Swagger: `src/docs/paths.auth.magicLink.ts`
+
+### Notes
+
+- Magic link tokens are cryptographically secure (32-byte random hex)
+- Tokens are hashed before storage (using bcrypt, same as passwords)
+- Links expire based on `expiryMinutes` config
+- Supports both GET (browser redirect) and POST (API) verification
+- GET requests can include `redirect` query param to redirect after login
+- Email sending uses the email service abstraction (see `docs/EMAIL_SERVICE.md`)
+- In development mode, the magic link URL is returned in the response for testing
+
 ## Database Migrations
 
 ### Running Migrations
