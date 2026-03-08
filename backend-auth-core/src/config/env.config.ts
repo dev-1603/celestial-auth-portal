@@ -45,9 +45,6 @@ const rawEnv = {
     SMTP_USER: process.env.SMTP_USER || '',
     SMTP_PASS: process.env.SMTP_PASS || '',
     SMTP_FROM: process.env.SMTP_FROM || '',
-    
-    // Email provider: 'nodemailer' (default, free SMTP), 'sendgrid' (paid), or 'console' (dev only)
-    EMAIL_PROVIDER: process.env.EMAIL_PROVIDER || 'nodemailer',
 
     BCRYPT_ROUNDS: process.env.BCRYPT_ROUNDS || '10',
     AUTH_CODE_EXPIRY_MINS: process.env.AUTH_CODE_EXPIRY_MINS || '5',
