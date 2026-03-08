@@ -349,6 +349,84 @@ npm test -- src/modules/auth/magic-link/__tests__/verify.handler.test.ts
 - Email sending uses the email service abstraction (see `docs/EMAIL_SERVICE.md`)
 - In development mode, the magic link URL is returned in the response for testing
 
+## Method 4: Phone OTP
+
+### Overview
+
+Phone OTP (One-Time Password) authentication via SMS. User requests an OTP code sent to their phone number, then verifies the code to log in.
+
+### Flow
+
+1. **Send OTP**: User requests OTP → Generate code → Hash and store in `VerificationCode` (channel=phone) → Send SMS
+2. **Verify OTP**: User submits code → Find active code → Verify hash → Check expiry/attempts → Mark as used → Find user via AuthIdentity → Issue JWT
+
+### Endpoints
+
+- `POST /api/v1/auth/phone/otp/send` - Send OTP code to phone via SMS
+- `POST /api/v1/auth/phone/otp/verify` - Verify OTP code and login
+
+### Config
+
+```json
+{
+  "enabledMethods": ["phone_sms_otp"],
+  "methodsConfig": {
+    "phone_sms_otp": {
+      "enabled": true,
+      "digits": 6,
+      "expiryMinutes": 10,
+      "maxAttempts": 5,
+      "fromNumber": "+1234567890"
+    }
+  }
+}
+```
+
+**Config Options:**
+- `digits`: Number of digits in OTP code (default: 6)
+- `expiryMinutes`: How long the OTP is valid (default: 10)
+- `maxAttempts`: Maximum verification attempts before code is invalidated (default: 5)
+- `fromNumber`: SMS sender phone number (E.164 format, optional, uses `TWILIO_FROM_NUMBER` env var if not set)
+
+### Phone Number Format
+
+- **E.164 format required**: `+[country code][number]` (e.g., `+1234567890`)
+- **10-digit US numbers**: Automatically normalized to `+1XXXXXXXXXX`
+- **Validation**: Phone numbers are validated and normalized before processing
+
+### Testing
+
+**Unit tests:**
+```bash
+npm test -- src/modules/auth/phone/__tests__/otp-send.handler.test.ts
+npm test -- src/modules/auth/phone/__tests__/otp-verify.handler.test.ts
+```
+
+**Postman:**
+- Use "Phone OTP Auth" folder in the collection
+- Send OTP request → Note the code (in dev mode) → Verify with that code
+
+### Implementation Files
+
+- Handlers: `src/modules/auth/phone/otp-send.handler.ts`, `otp-verify.handler.ts`
+- Routes: `src/modules/auth/phone/routes.ts`
+- Service: `src/services/sms.service.ts` (SMS service abstraction)
+- Repository: `src/repositories/verification-code.repository.ts` (reused from Email OTP)
+- Tests: `src/modules/auth/phone/__tests__/*.test.ts`
+- Swagger: `src/docs/paths.auth.phone.ts`
+
+### Notes
+
+- OTP codes are hashed before storage (using bcrypt, same as passwords)
+- Codes expire based on `expiryMinutes` config
+- Failed attempts are tracked; max attempts enforced
+- SMS sending uses the SMS service abstraction (see `docs/SMS_SERVICE.md`)
+  - Default: Console provider (logs to console in development)
+  - Production: Twilio provider (requires `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`)
+  - Development: Use `SMS_PROVIDER=console` to log SMS instead of sending
+- Phone numbers are normalized to E.164 format automatically
+- In development mode, the OTP code is returned in the response for testing
+
 ## Database Migrations
 
 ### Running Migrations

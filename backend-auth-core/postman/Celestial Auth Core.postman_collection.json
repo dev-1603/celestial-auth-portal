@@ -31,8 +31,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/",
-              "host": ["{{baseUrl}}"],
-              "path": [""]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                ""
+              ]
             },
             "description": "Unversioned API root. Returns a simple message indicating the API is available."
           },
@@ -61,8 +65,12 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health",
-              "host": ["{{baseUrl}}"],
-              "path": ["health"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health"
+              ]
             },
             "description": "Unversioned simple liveness. Returns status and service name."
           },
@@ -94,8 +102,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health/live",
-              "host": ["{{baseUrl}}"],
-              "path": ["health", "live"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "live"
+              ]
             },
             "description": "Unversioned liveness with DB check. Use for k8s liveness probes. Add ?details=true for pool info."
           },
@@ -128,8 +141,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health/live?details=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["health", "live"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "live"
+              ],
               "query": [
                 {
                   "key": "details",
@@ -166,8 +184,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health/ready",
-              "host": ["{{baseUrl}}"],
-              "path": ["health", "ready"]
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ]
             },
             "description": "Unversioned readiness with DB check. Use for k8s readiness probes. Add ?details=true for pool info."
           },
@@ -200,8 +223,13 @@
             "header": [],
             "url": {
               "raw": "{{baseUrl}}/health/ready?details=true",
-              "host": ["{{baseUrl}}"],
-              "path": ["health", "ready"],
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "health",
+                "ready"
+              ],
               "query": [
                 {
                   "key": "details",
@@ -244,15 +272,121 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your-password\"\n}", "options": {"raw": {"language": "json"}}},
-            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "login"]},
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your-password\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email",
+                "login"
+              ]
+            },
             "description": "Login with email and password. Returns access token (200), invalid credentials (401), or validation error (400)."
           },
           "response": [
-            {"name": "Success", "originalRequest": {"method": "POST", "url": {"raw": "{{baseUrl}}/api/v1/auth/email/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "login"]}}, "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"tenantSlug\": \"acme\",\n    \"role\": \"USER\"\n  }\n}"},
-            {"name": "Invalid Credentials", "originalRequest": {"method": "POST", "url": {"raw": "{{baseUrl}}/api/v1/auth/email/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "login"]}}, "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Invalid credentials\"\n}"},
-            {"name": "Missing Fields", "originalRequest": {"method": "POST", "url": {"raw": "{{baseUrl}}/api/v1/auth/email/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "login"]}}, "status": "Bad Request", "code": 400, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Email and password are required\",\n  \"code\": \"VALIDATION\"\n}"}
+            {
+              "name": "Success",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/email/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "email",
+                    "login"
+                  ]
+                }
+              },
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"tenantSlug\": \"acme\",\n    \"role\": \"USER\"\n  }\n}"
+            },
+            {
+              "name": "Invalid Credentials",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/email/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "email",
+                    "login"
+                  ]
+                }
+              },
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid credentials\"\n}"
+            },
+            {
+              "name": "Missing Fields",
+              "originalRequest": {
+                "method": "POST",
+                "url": {
+                  "raw": "{{baseUrl}}/api/v1/auth/email/login",
+                  "host": [
+                    "{{baseUrl}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v1",
+                    "auth",
+                    "email",
+                    "login"
+                  ]
+                }
+              },
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Email and password are required\",\n  \"code\": \"VALIDATION\"\n}"
+            }
           ]
         },
         {
@@ -276,12 +410,46 @@
           "request": {
             "method": "POST",
             "header": [],
-            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "refresh"]},
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/refresh",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email",
+                "refresh"
+              ]
+            },
             "description": "Refresh access token using refresh token cookie."
           },
           "response": [
-            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\"\n}"},
-            {"name": "No or Invalid Cookie", "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"No refresh token provided\"\n}"}
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accessToken\": \"eyJ...\"\n}"
+            },
+            {
+              "name": "No or Invalid Cookie",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"No refresh token provided\"\n}"
+            }
           ]
         },
         {
@@ -307,13 +475,53 @@
           ],
           "request": {
             "method": "GET",
-            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
-            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "me"]},
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{accessToken}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/me",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email",
+                "me"
+              ]
+            },
             "description": "Get current user. Requires Bearer token."
           },
           "response": [
-            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"userId\": \"clxx123\",\n  \"email\": \"user@example.com\",\n  \"tenantId\": \"tenant-abc\",\n  \"tenantSlug\": \"acme\",\n  \"role\": \"USER\",\n  \"apps\": []\n}"},
-            {"name": "Unauthorized", "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Authorization header must be in the format: Bearer <token>\"\n}"}
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"userId\": \"clxx123\",\n  \"email\": \"user@example.com\",\n  \"tenantId\": \"tenant-abc\",\n  \"tenantSlug\": \"acme\",\n  \"role\": \"USER\",\n  \"apps\": []\n}"
+            },
+            {
+              "name": "Unauthorized",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Authorization header must be in the format: Bearer <token>\"\n}"
+            }
           ]
         },
         {
@@ -333,11 +541,34 @@
           "request": {
             "method": "POST",
             "header": [],
-            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/logout", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "logout"]},
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/logout",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email",
+                "logout"
+              ]
+            },
             "description": "Logout - clears refresh token cookie."
           },
           "response": [
-            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"success\": true\n}"}
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"success\": true\n}"
+            }
           ]
         }
       ],
@@ -368,14 +599,62 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\"\n}", "options": {"raw": {"language": "json"}}},
-            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/otp/send", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "otp", "send"]},
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/otp/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email",
+                "otp",
+                "send"
+              ]
+            },
             "description": "Send OTP to email. In development the code is returned in response."
           },
           "response": [
-            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"message\": \"OTP sent to email\",\n  \"otp\": \"123456\"\n}"},
-            {"name": "User Not Found", "status": "Not Found", "code": 404, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"User not found\"\n}"}
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"OTP sent to email\",\n  \"otp\": \"123456\"\n}"
+            },
+            {
+              "name": "User Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"User not found\"\n}"
+            }
           ]
         },
         {
@@ -400,15 +679,74 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"{{otpCode}}\"\n}", "options": {"raw": {"language": "json"}}},
-            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/otp/verify", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "otp", "verify"]},
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"{{otpCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/email/otp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "email",
+                "otp",
+                "verify"
+              ]
+            },
             "description": "Verify OTP and login. Use code from Send OTP response or email."
           },
           "response": [
-            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"role\": \"USER\"\n  }\n}"},
-            {"name": "Invalid Code", "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Invalid OTP code\"\n}"},
-            {"name": "Missing Fields", "status": "Bad Request", "code": 400, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Email and code are required\",\n  \"code\": \"VALIDATION\"\n}"}
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"role\": \"USER\"\n  }\n}"
+            },
+            {
+              "name": "Invalid Code",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid OTP code\"\n}"
+            },
+            {
+              "name": "Missing Fields",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Email and code are required\",\n  \"code\": \"VALIDATION\"\n}"
+            }
           ]
         }
       ],
@@ -439,14 +777,61 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\"\n}", "options": {"raw": {"language": "json"}}},
-            "url": {"raw": "{{baseUrl}}/api/v1/auth/magic-link/send", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "magic-link", "send"]},
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/magic-link/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "magic-link",
+                "send"
+              ]
+            },
             "description": "Send magic link to email. In development the link is returned in response."
           },
           "response": [
-            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"message\": \"Magic link sent to email\",\n  \"magicLink\": \"http://localhost:5001/api/v1/auth/magic-link/verify?token=abc&email=user@example.com\"\n}"},
-            {"name": "User Not Found", "status": "Not Found", "code": 404, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"User not found\"\n}"}
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"message\": \"Magic link sent to email\",\n  \"magicLink\": \"http://localhost:5001/api/v1/auth/magic-link/verify?token=abc&email=user@example.com\"\n}"
+            },
+            {
+              "name": "User Not Found",
+              "status": "Not Found",
+              "code": 404,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"User not found\"\n}"
+            }
           ]
         },
         {
@@ -468,12 +853,60 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {"raw": "{{baseUrl}}/api/v1/auth/magic-link/verify?token={{magicLinkToken}}&email=user@example.com&redirect=http://localhost:3000/app", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "magic-link", "verify"], "query": [{"key": "token", "value": "{{magicLinkToken}}"}, {"key": "email", "value": "user@example.com"}, {"key": "redirect", "value": "http://localhost:3000/app"}]},
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify?token={{magicLinkToken}}&email=user@example.com&redirect=http://localhost:3000/app",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "magic-link",
+                "verify"
+              ],
+              "query": [
+                {
+                  "key": "token",
+                  "value": "{{magicLinkToken}}"
+                },
+                {
+                  "key": "email",
+                  "value": "user@example.com"
+                },
+                {
+                  "key": "redirect",
+                  "value": "http://localhost:3000/app"
+                }
+              ]
+            },
             "description": "Verify magic link via GET (e.g. browser click). Can redirect to frontend."
           },
           "response": [
-            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"role\": \"USER\"\n  }\n}"},
-            {"name": "Redirect", "status": "Found", "code": 302, "header": [{"key": "Location", "value": "http://localhost:3000/app"}], "body": ""}
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"role\": \"USER\"\n  }\n}"
+            },
+            {
+              "name": "Redirect",
+              "status": "Found",
+              "code": 302,
+              "header": [
+                {
+                  "key": "Location",
+                  "value": "http://localhost:3000/app"
+                }
+              ],
+              "body": ""
+            }
           ]
         },
         {
@@ -498,19 +931,335 @@
           ],
           "request": {
             "method": "POST",
-            "header": [{"key": "Content-Type", "value": "application/json"}],
-            "body": {"mode": "raw", "raw": "{\n  \"token\": \"{{magicLinkToken}}\",\n  \"email\": \"user@example.com\"\n}", "options": {"raw": {"language": "json"}}},
-            "url": {"raw": "{{baseUrl}}/api/v1/auth/magic-link/verify", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "magic-link", "verify"]},
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"token\": \"{{magicLinkToken}}\",\n  \"email\": \"user@example.com\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "magic-link",
+                "verify"
+              ]
+            },
             "description": "Verify magic link via POST. Use token from Send Magic Link response or email."
           },
           "response": [
-            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"role\": \"USER\"\n  }\n}"},
-            {"name": "Invalid Token", "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Invalid or expired magic link\"\n}"},
-            {"name": "Missing Fields", "status": "Bad Request", "code": 400, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Token and email are required\",\n  \"code\": \"VALIDATION\"\n}"}
+            {
+              "name": "Success",
+              "status": "OK",
+              "code": 200,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"role\": \"USER\"\n  }\n}"
+            },
+            {
+              "name": "Invalid Token",
+              "status": "Unauthorized",
+              "code": 401,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Invalid or expired magic link\"\n}"
+            },
+            {
+              "name": "Missing Fields",
+              "status": "Bad Request",
+              "code": 400,
+              "header": [
+                {
+                  "key": "Content-Type",
+                  "value": "application/json"
+                }
+              ],
+              "body": "{\n  \"error\": \"Token and email are required\",\n  \"code\": \"VALIDATION\"\n}"
+            }
           ]
         }
       ],
       "description": "Magic link authentication endpoints"
+    },
+    {
+      "name": "Phone OTP Auth",
+      "item": [
+        {
+          "name": "Send Phone OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    if (jsonData.otp) {",
+                  "        pm.environment.set('phoneOtpCode', jsonData.otp);",
+                  "    }",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+1234567890\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/phone/otp/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "phone",
+                "otp",
+                "send"
+              ]
+            },
+            "description": "Send OTP code to phone number. In development, the code is returned in response."
+          },
+          "response": []
+        },
+        {
+          "name": "Send Phone OTP - User Not Found",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+1999999999\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/phone/otp/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "phone",
+                "otp",
+                "send"
+              ]
+            },
+            "description": "Test with non-existent user - should return 404"
+          },
+          "response": []
+        },
+        {
+          "name": "Send Phone OTP - Invalid Format",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"invalid\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/phone/otp/send",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "phone",
+                "otp",
+                "send"
+              ]
+            },
+            "description": "Test with invalid phone format - should return 400"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Phone OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "if (pm.response.code === 200) {",
+                  "    const jsonData = pm.response.json();",
+                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+1234567890\",\n  \"code\": \"{{phoneOtpCode}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/phone/otp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "phone",
+                "otp",
+                "verify"
+              ]
+            },
+            "description": "Verify OTP code and login. Use code from Send Phone OTP response or SMS."
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Phone OTP - Invalid Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+1234567890\",\n  \"code\": \"000000\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/phone/otp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "phone",
+                "otp",
+                "verify"
+              ]
+            },
+            "description": "Test with invalid code - should return 401"
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Phone OTP - Missing Fields",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"+1234567890\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/v1/auth/phone/otp/verify",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "auth",
+                "phone",
+                "otp",
+                "verify"
+              ]
+            },
+            "description": "Test missing code - should return 400"
+          },
+          "response": []
+        }
+      ],
+      "description": "Phone OTP authentication endpoints"
     }
   ],
   "variable": [
@@ -536,6 +1285,11 @@
     },
     {
       "key": "magicLinkUrl",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "phoneOtpCode",
       "value": "",
       "type": "string"
     }
