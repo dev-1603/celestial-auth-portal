@@ -1,0 +1,6 @@
+# Root .cursorignore
+# I am only working on Backend today, so I ignore the UIs
+auth-client-next/
+# auth-client-vue/
+screen architecture & designs
+# backend-auth-core/
