@@ -1,0 +1,22 @@
+# Nuxt 4 specific auto-generated files
+.nuxt/
+.output/
+dist/
+
+# Dependencies & Lockfiles
+node_modules/
+pnpm-lock.yaml
+bun.lockb
+
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+
+# Build logs and system files
+*.log
+.DS_Store
+
+# Large assets or schemas that don't need AI indexing
+public/
+# schema/
