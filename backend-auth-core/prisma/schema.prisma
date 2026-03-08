@@ -244,21 +244,32 @@ model AuthCode {
 // MULTI-METHOD AUTH MODELS
 // ─────────────────────────────────────────
 
-model AuthIdentity {
-  id             String   @id @default(cuid())
-  userId         String
-  providerType   String   // e.g. "email", "google", "github", "magic_link", "phone"
-  providerUserId String   // e.g. Google sub, or email for providerType=email, or phone E.164
-  email          String?  // optional; from provider or for email identity
-  displayName    String?
-  metadata       Json?    // provider-specific claims
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+enum AuthMethodType {
+  PASSWORD   // email/password, passkey
+  OAUTH      // google, github, etc.
+  SSO        // enterprise SSO (SAML, OIDC)
+  MAGIC_LINK // email magic link
+  OTP        // email OTP, SMS OTP
+  PHONE      // phone number auth
+}
 
-  user           GlobalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+model AuthIdentity {
+  id             String         @id @default(cuid())
+  userId         String
+  providerType   String         // e.g. "email", "google", "github", "magic_link", "phone"
+  providerUserId String         // e.g. Google sub, or email for providerType=email, or phone E.164
+  authMethodType AuthMethodType? // category: PASSWORD | OAUTH | MAGIC_LINK | OTP | PHONE
+  email          String?       // optional; from provider or for email identity
+  displayName    String?
+  metadata       Json?          // provider-specific claims
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  user           GlobalUser     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([providerType, providerUserId])
   @@index([userId])
+  @@index([authMethodType])
 }
 
 model VerificationCode {

@@ -26,6 +26,11 @@ apiRouter.use('/auth', authRouter)
  * Register all routes on the app. Call this from app.ts only.
  */
 export const registerRoutes = (app: Application): void => {
+    // Base route (/) for API discovery / health checks
+    app.get('/', (_req: Request, res: Response) => {
+        res.status(200).json({ message: 'Celestial Auth Core API' })
+    })
+
     // Versioned API routes
     app.use(API_PREFIX, apiRouter)
 

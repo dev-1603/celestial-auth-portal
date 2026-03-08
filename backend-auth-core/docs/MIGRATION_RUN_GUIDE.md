@@ -68,6 +68,41 @@ SELECT COUNT(*) FROM "AuthIdentity";
 
 ## Troubleshooting
 
+### "Tenant or user not found" (Supabase)
+This error means migrations are using the pooler instead of the direct database. Prisma must use the **direct** connection for migrations.
+
+- **Wrong (pooler):** `DIRECT_URL=...@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres`
+- **Correct (direct):** `DIRECT_URL=postgresql://postgres:[PASSWORD]@db.[PROJECT-REF].supabase.co:5432/postgres`
+
+Get the direct connection string from **Supabase Dashboard → Settings → Database → Connection string → URI** (use the "Direct connection" option, not "Session pooler"). Use that full URI for `DIRECT_URL`. Keep `DATABASE_URL` as the pooler URL (port 6543) for your app.
+
+### "Failed to apply cleanly to the shadow database" / "The underlying table for model GlobalUser does not exist"
+This happens when the DB was created outside Prisma Migrate (e.g. `db push` or manual) and the migrations folder only has later migrations. `migrate dev` uses a **shadow database** and replays all migrations from scratch, so it never creates `GlobalUser` and the migration that adds `AuthIdentity` fails.
+
+**Fix:** Apply pending migrations without using a shadow database:
+
+```bash
+pnpm run db:migrate:deploy
+```
+
+This applies only pending migrations (e.g. `AuthIdentity` + `VerificationCode`) to your existing database. Use `db:migrate:deploy` for this setup instead of `db:migrate` when adding new migrations.
+
+### "The database schema is not empty" (P3005) / baseline
+This happens when the database already has tables but no Prisma migration history (`_prisma_migrations` empty or missing). Prisma refuses to run migrations until you **baseline** the DB.
+
+**Fix (one-time):**
+
+1. Mark the baseline migration as already applied (does not run any SQL):
+   ```bash
+   pnpm run db:migrate:baseline
+   ```
+2. Apply pending migrations (creates `AuthIdentity` and `VerificationCode`):
+   ```bash
+   pnpm run db:migrate:deploy
+   ```
+
+After that, use `db:migrate:deploy` for future migrations.
+
 ### "Connection refused" or "Cannot connect"
 - Check `DATABASE_URL` is correct
 - Verify network access to database

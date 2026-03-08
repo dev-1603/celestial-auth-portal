@@ -6,14 +6,16 @@
  */
 
 import { prisma } from '../lib/prisma'
-import type { AuthIdentity as PrismaAuthIdentity } from '@prisma/client'
+import type { AuthIdentity as PrismaAuthIdentity, AuthMethodType } from '@prisma/client'
 
 export type AuthIdentity = PrismaAuthIdentity
+export type { AuthMethodType }
 
 export interface CreateAuthIdentityInput {
   userId: string
   providerType: string
   providerUserId: string
+  authMethodType?: AuthMethodType | null
   email?: string | null
   displayName?: string | null
   metadata?: any
@@ -87,6 +89,7 @@ export const createAuthIdentity = async (
       userId: data.userId,
       providerType: data.providerType,
       providerUserId: data.providerUserId,
+      authMethodType: data.authMethodType ?? null,
       email: data.email ?? null,
       displayName: data.displayName ?? null,
       metadata: data.metadata ? JSON.parse(JSON.stringify(data.metadata)) : null,
@@ -100,13 +103,14 @@ export const createAuthIdentity = async (
  */
 export const updateAuthIdentity = async (
   id: string,
-  data: Partial<Pick<CreateAuthIdentityInput, 'email' | 'displayName' | 'metadata'>>,
+  data: Partial<Pick<CreateAuthIdentityInput, 'email' | 'displayName' | 'metadata' | 'authMethodType'>>,
 ): Promise<AuthIdentity> => {
   return prisma.authIdentity.update({
     where: { id },
     data: {
       ...(data.email !== undefined && { email: data.email }),
       ...(data.displayName !== undefined && { displayName: data.displayName }),
+      ...(data.authMethodType !== undefined && { authMethodType: data.authMethodType }),
       ...(data.metadata !== undefined && {
         metadata: data.metadata ? JSON.parse(JSON.stringify(data.metadata)) : null,
       }),

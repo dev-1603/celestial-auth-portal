@@ -111,6 +111,15 @@ const base = {
           details: { type: 'object' },
         },
       },
+      RouteNotFoundResponse: {
+        type: 'object',
+        description: 'Returned when the requested path has no handler',
+        properties: {
+          success: { type: 'boolean', example: false },
+          error: { type: 'string', example: 'ROUTE_NOT_FOUND' },
+          path: { type: 'string', description: 'Requested path', example: '/' },
+        },
+      },
       PaginatedResponse: {
         type: 'object',
         properties: {
