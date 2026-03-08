@@ -6,7 +6,7 @@ export type GlobalUser = PrismaGlobalUser
 
 export interface CreateGlobalUserInput {
     email: string
-    passwordHash: string
+    passwordHash: string | null
 }
 
 export interface GlobalUserWithTenant extends PrismaGlobalUser {
@@ -27,7 +27,7 @@ export const createGlobalUser = async (
     prisma.globalUser.create({
         data: {
             email: data.email,
-            passwordHash: data.passwordHash,
+            passwordHash: data.passwordHash ?? null,
         },
     })
 

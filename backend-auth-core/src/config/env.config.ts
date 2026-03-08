@@ -49,6 +49,12 @@ const rawEnv = {
     // Email provider: 'nodemailer' (default, free SMTP), 'sendgrid' (paid), or 'console' (dev only)
     EMAIL_PROVIDER: process.env.EMAIL_PROVIDER || 'nodemailer',
 
+    // SMS provider: 'twilio' (production, paid), or 'console' (dev only)
+    SMS_PROVIDER: process.env.SMS_PROVIDER || 'console',
+    TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID || '',
+    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN || '',
+    TWILIO_FROM_NUMBER: process.env.TWILIO_FROM_NUMBER || '',
+
     BCRYPT_ROUNDS: process.env.BCRYPT_ROUNDS || '10',
     AUTH_CODE_EXPIRY_MINS: process.env.AUTH_CODE_EXPIRY_MINS || '5',
     CLIENT_SECRET_SALT_ROUNDS: process.env.CLIENT_SECRET_SALT_ROUNDS || '10',

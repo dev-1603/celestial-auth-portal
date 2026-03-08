@@ -349,6 +349,191 @@ npm test -- src/modules/auth/magic-link/__tests__/verify.handler.test.ts
 - Email sending uses the email service abstraction (see `docs/EMAIL_SERVICE.md`)
 - In development mode, the magic link URL is returned in the response for testing
 
+## Method 4: Phone OTP
+
+### Overview
+
+Phone OTP (One-Time Password) authentication via SMS. User requests an OTP code sent to their phone number, then verifies the code to log in.
+
+### Flow
+
+1. **Send OTP**: User requests OTP → Generate code → Hash and store in `VerificationCode` (channel=phone) → Send SMS
+2. **Verify OTP**: User submits code → Find active code → Verify hash → Check expiry/attempts → Mark as used → Find user via AuthIdentity → Issue JWT
+
+### Endpoints
+
+- `POST /api/v1/auth/phone/otp/send` - Send OTP code to phone via SMS
+- `POST /api/v1/auth/phone/otp/verify` - Verify OTP code and login
+
+### Config
+
+```json
+{
+  "enabledMethods": ["phone_sms_otp"],
+  "methodsConfig": {
+    "phone_sms_otp": {
+      "enabled": true,
+      "digits": 6,
+      "expiryMinutes": 10,
+      "maxAttempts": 5,
+      "fromNumber": "+1234567890"
+    }
+  }
+}
+```
+
+**Config Options:**
+- `digits`: Number of digits in OTP code (default: 6)
+- `expiryMinutes`: How long the OTP is valid (default: 10)
+- `maxAttempts`: Maximum verification attempts before code is invalidated (default: 5)
+- `fromNumber`: SMS sender phone number (E.164 format, optional, uses `TWILIO_FROM_NUMBER` env var if not set)
+
+### Phone Number Format
+
+- **E.164 format required**: `+[country code][number]` (e.g., `+1234567890`)
+- **10-digit US numbers**: Automatically normalized to `+1XXXXXXXXXX`
+- **Validation**: Phone numbers are validated and normalized before processing
+
+### Testing
+
+**Unit tests:**
+```bash
+npm test -- src/modules/auth/phone/__tests__/otp-send.handler.test.ts
+npm test -- src/modules/auth/phone/__tests__/otp-verify.handler.test.ts
+```
+
+**Postman:**
+- Use "Phone OTP Auth" folder in the collection
+- Send OTP request → Note the code (in dev mode) → Verify with that code
+
+### Implementation Files
+
+- Handlers: `src/modules/auth/phone/otp-send.handler.ts`, `otp-verify.handler.ts`
+- Routes: `src/modules/auth/phone/routes.ts`
+- Service: `src/services/sms.service.ts` (SMS service abstraction)
+- Repository: `src/repositories/verification-code.repository.ts` (reused from Email OTP)
+- Tests: `src/modules/auth/phone/__tests__/*.test.ts`
+- Swagger: `src/docs/paths.auth.phone.ts`
+
+### Notes
+
+- OTP codes are hashed before storage (using bcrypt, same as passwords)
+- Codes expire based on `expiryMinutes` config
+- Failed attempts are tracked; max attempts enforced
+- SMS sending uses the SMS service abstraction (see `docs/SMS_SERVICE.md`)
+  - Default: Console provider (logs to console in development)
+  - Production: Twilio provider (requires `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_FROM_NUMBER`)
+  - Development: Use `SMS_PROVIDER=console` to log SMS instead of sending
+- Phone numbers are normalized to E.164 format automatically
+- In development mode, the OTP code is returned in the response for testing
+
+## Method 5: OAuth
+
+### Overview
+
+OAuth2/OIDC authentication via third-party providers (Google, GitHub, Microsoft, etc.). User authorizes with the provider, and the provider redirects back with an authorization code that is exchanged for user information.
+
+### Flow
+
+1. **Initiate**: User clicks "Sign in with {Provider}" → Frontend calls `/oauth/{provider}/initiate` → Backend generates CSRF state → Redirects to provider
+2. **Authorize**: User authorizes on provider's page → Provider redirects to `/oauth/{provider}/callback` with code and state
+3. **Callback**: Backend validates state → Exchanges code for access token → Fetches user info → Finds or creates user → Links OAuth account → Issues JWT → Redirects or returns JSON
+
+### Endpoints
+
+- `GET /api/v1/auth/oauth/providers` - Get list of enabled OAuth providers
+- `GET /api/v1/auth/oauth/{provider}/initiate` - Initiate OAuth flow (redirects to provider)
+- `GET /api/v1/auth/oauth/{provider}/callback` - Handle OAuth callback (called by provider)
+
+### Supported Providers
+
+- **Google** - OAuth2 with OpenID Connect
+- **GitHub** - OAuth2
+- **Microsoft** - OAuth2 with OpenID Connect
+
+### Config
+
+```json
+{
+  "enabledMethods": ["oauth"],
+  "methodsConfig": {
+    "oauth": {
+      "enabled": true,
+      "allowSignup": true,
+      "allowLinking": true
+    }
+  },
+  "providers": {
+    "oauth": [
+      {
+        "id": "google",
+        "enabled": true,
+        "displayName": "Google",
+        "logo": "/logos/google.svg"
+      },
+      {
+        "id": "github",
+        "enabled": true,
+        "displayName": "GitHub",
+        "logo": "/logos/github.svg"
+      }
+    ]
+  }
+}
+```
+
+**Config Options:**
+- `allowSignup`: Whether to create new users via OAuth (default: true)
+- `allowLinking`: Whether to link OAuth accounts to existing users by email (default: true)
+
+### Environment Variables
+
+For each provider, set:
+```bash
+# Google
+OAUTH_GOOGLE_CLIENT_ID=your_google_client_id
+OAUTH_GOOGLE_CLIENT_SECRET=your_google_client_secret
+
+# GitHub
+OAUTH_GITHUB_CLIENT_ID=your_github_client_id
+OAUTH_GITHUB_CLIENT_SECRET=your_github_client_secret
+
+# Microsoft
+OAUTH_MICROSOFT_CLIENT_ID=your_microsoft_client_id
+OAUTH_MICROSOFT_CLIENT_SECRET=your_microsoft_client_secret
+```
+
+### Testing
+
+**Unit tests:**
+```bash
+npm test -- src/modules/auth/oauth/__tests__/initiate.handler.test.ts
+npm test -- src/modules/auth/oauth/__tests__/callback.handler.test.ts
+```
+
+**Postman:**
+- Use "OAuth Auth" folder in the collection
+- Note: OAuth flow requires actual provider setup (client ID/secret)
+- Callback endpoint is called by provider, not directly testable via Postman
+
+### Implementation Files
+
+- Handlers: `src/modules/auth/oauth/initiate.handler.ts`, `callback.handler.ts`
+- Routes: `src/modules/auth/oauth/routes.ts`
+- Service: `src/services/oauth.service.ts` (OAuth abstraction)
+- Repository: `src/repositories/auth-identity.repository.ts` (reused)
+- Tests: `src/modules/auth/oauth/__tests__/*.test.ts`
+- Swagger: `src/docs/paths.auth.oauth.ts`
+
+### Notes
+
+- **CSRF Protection**: State parameter stored in httpOnly cookie, validated in callback
+- **Account Linking**: OAuth accounts can be linked to existing users by email
+- **Provider-Specific**: Each provider has different user info structure (normalized by service)
+- **GitHub Email**: GitHub may not return email in user info - service fetches from emails endpoint if needed
+- **Redirect Support**: Can redirect to frontend after successful login
+- **Multiple Providers**: Users can link multiple OAuth providers to the same account
+
 ## Database Migrations
 
 ### Running Migrations
