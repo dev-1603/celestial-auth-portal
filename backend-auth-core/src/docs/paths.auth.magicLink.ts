@@ -1,11 +1,11 @@
 /**
  * OpenAPI path definitions for Auth Magic Link module.
- * Kept in one file so swagger-jsdoc can scan and merge with base spec.
+ * Paths are relative to servers[].url. Versioned: /api/v1/auth/magic-link/*
  */
 
 /**
  * @openapi
- * /auth/magic-link/send:
+ * /api/v1/auth/magic-link/send:
  *   post:
  *     tags:
  *       - Auth - Magic Link
@@ -64,7 +64,7 @@ const send = true
 
 /**
  * @openapi
- * /auth/magic-link/verify:
+ * /api/v1/auth/magic-link/verify:
  *   get:
  *     tags:
  *       - Auth - Magic Link

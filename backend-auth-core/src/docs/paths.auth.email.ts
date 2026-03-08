@@ -1,7 +1,7 @@
 /**
  * OpenAPI path definitions for Auth Email module.
- * Kept in one file so swagger-jsdoc can scan and merge with base spec.
- * Paths are relative to servers[].url (e.g. /api/v1).
+ * Paths are relative to servers[].url. Unversioned: /, /health, /health/live, /health/ready.
+ * Versioned: /api/v1/auth/email/*
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
@@ -12,9 +12,9 @@
  *   get:
  *     tags:
  *       - Health
- *     summary: API root
+ *     summary: API root (unversioned)
  *     operationId: getApiRoot
- *     description: Returns a simple message indicating the Celestial Auth Core API is available.
+ *     description: Returns a simple message indicating the Celestial Auth Core API is available. Not under API versioning.
  *     responses:
  *       '200':
  *         description: OK
@@ -41,9 +41,9 @@ const root = true
  *   get:
  *     tags:
  *       - Health
- *     summary: Health check
+ *     summary: Health check (unversioned)
  *     operationId: getHealth
- *     description: Liveness/readiness. Returns status, uptime, and timestamp.
+ *     description: Simple liveness. Returns status and service name. Not under API versioning.
  *     responses:
  *       '200':
  *         description: OK
@@ -56,7 +56,73 @@ const health = true
 
 /**
  * @openapi
- * /auth/email/login:
+ * /health/live:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Liveness (unversioned)
+ *     operationId: getHealthLive
+ *     description: Checks database connectivity. Use for k8s liveness probes. Optional query details=true for pool info.
+ *     parameters:
+ *       - in: query
+ *         name: details
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: ['true', '1']
+ *         description: Include pool details in response
+ *     responses:
+ *       '200':
+ *         description: Service and DB are healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthDetailResponse'
+ *       '503':
+ *         description: Database unavailable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthDetailResponse'
+ */
+const healthLive = true
+
+/**
+ * @openapi
+ * /health/ready:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Readiness (unversioned)
+ *     operationId: getHealthReady
+ *     description: Checks database connectivity. Use for k8s readiness probes. Optional query details=true for pool info.
+ *     parameters:
+ *       - in: query
+ *         name: details
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: ['true', '1']
+ *         description: Include pool details in response
+ *     responses:
+ *       '200':
+ *         description: Service is ready to accept traffic
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthDetailResponse'
+ *       '503':
+ *         description: Database unavailable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthDetailResponse'
+ */
+const healthReady = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/login:
  *   post:
  *     tags:
  *       - Auth - Email
@@ -105,7 +171,7 @@ const login = true
 
 /**
  * @openapi
- * /auth/email/logout:
+ * /api/v1/auth/email/logout:
  *   post:
  *     tags:
  *       - Auth - Email
@@ -124,7 +190,7 @@ const logout = true
 
 /**
  * @openapi
- * /auth/email/refresh:
+ * /api/v1/auth/email/refresh:
  *   post:
  *     tags:
  *       - Auth - Email
@@ -171,7 +237,7 @@ const refresh = true
 
 /**
  * @openapi
- * /auth/email/me:
+ * /api/v1/auth/email/me:
  *   get:
  *     tags:
  *       - Auth - Email
@@ -200,7 +266,7 @@ const me = true
 
 /**
  * @openapi
- * /auth/email/otp/send:
+ * /api/v1/auth/email/otp/send:
  *   post:
  *     tags:
  *       - Auth - Email
@@ -259,7 +325,7 @@ const otpSend = true
 
 /**
  * @openapi
- * /auth/email/otp/verify:
+ * /api/v1/auth/email/otp/verify:
  *   post:
  *     tags:
  *       - Auth - Email
@@ -330,4 +396,4 @@ const otpSend = true
  */
 const otpVerify = true
 
-export { root, health, login, logout, refresh, me, otpSend, otpVerify }
+export { root, health, healthLive, healthReady, login, logout, refresh, me, otpSend, otpVerify }

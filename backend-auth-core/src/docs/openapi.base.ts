@@ -1,27 +1,29 @@
 /**
  * OpenAPI 3 base spec — single source of truth for components, security, and global settings.
- * Paths are merged from JSDoc in paths.*.ts. Version-controlled for CI/linting (e.g. Spectral).
+ * Paths are merged from JSDoc in paths.*.ts. Root (/) and health (/health, /health/live, /health/ready)
+ * are unversioned; all other API routes are under /api/v1.
  */
 const base = {
   openapi: '3.0.3',
   info: {
-    title: 'Celestial Auth  API',
+    title: 'Celestial Auth API',
     version: '1.0.0',
     description: [
       'Pluggable auth service powering multi-tenant identity, JWT session management, and tenant-scoped role resolution for the Celestial SaaS platform.',
+      'Unversioned: GET / (root), GET /health, GET /health/live, GET /health/ready. Versioned API: /api/v1/*.',
       'Protected routes require `Authorization: Bearer <access_token>`.',
-      'Refresh tokens are issued as httpOnly cookies — use `POST /auth/refresh` to renew sessions silently.',
+      'Refresh tokens are issued as httpOnly cookies — use `POST /api/v1/auth/email/refresh` to renew sessions silently.',
     ].join(' '),
     contact: { name: 'Debjyoti Mohapatra' },
     license: { name: 'MIT' },
   },
   servers: [
     { url: `http://localhost:${process.env.PORT || 5001}`, description: 'Local Development' },
-    { url: `${process.env.API_URL}`, description: 'Production' },
+    { url: process.env.API_URL || 'https://api.example.com', description: 'Production' },
   ],
   tags: [
-    { name: 'Health', description: 'Health check endpoint' },
-    { name: 'Auth', description: 'Authentication endpoints' },
+    { name: 'Health', description: 'Unversioned health and liveness endpoints' },
+    { name: 'Auth', description: 'Authentication endpoints (under /api/v1)' },
   ],
   components: {
     securitySchemes: {
@@ -35,7 +37,7 @@ const base = {
         type: 'apiKey',
         in: 'cookie',
         name: 'celestial_refresh_token',
-        description: 'HttpOnly refresh cookie (7d). Used by POST /auth/email/refresh.',
+        description: 'HttpOnly refresh cookie (7d). Used by POST /api/v1/auth/email/refresh.',
       },
     },
     schemas: {
@@ -89,10 +91,22 @@ const base = {
       },
       HealthResponse: {
         type: 'object',
+        description: 'Simple health response (GET /health)',
         properties: {
           status: { type: 'string', example: 'ok' },
-          uptime: { type: 'number' },
+          service: { type: 'string', example: 'celestial-auth-core' },
+        },
+      },
+      HealthDetailResponse: {
+        type: 'object',
+        description: 'Detailed health response (GET /health/live, GET /health/ready)',
+        properties: {
+          status: { type: 'string', enum: ['ok', 'degraded'], example: 'ok' },
+          dialect: { type: 'string', description: 'Database dialect', example: 'postgresql' },
+          latencyMs: { type: 'number', description: 'DB check latency in ms' },
+          pool: { type: 'object', description: 'Pool info when details=true' },
           timestamp: { type: 'string', format: 'date-time' },
+          error: { type: 'string', description: 'Present when status is degraded' },
         },
       },
       ErrorResponse: {

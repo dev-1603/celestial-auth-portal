@@ -4,6 +4,11 @@ import { dbConfig } from '../config/db.config'
 
 const router = express.Router()
 
+// GET /health — simple liveness (unversioned)
+router.get('/', (_req: Request, res: Response) => {
+    res.status(200).json({ status: 'ok', service: 'celestial-auth-core' })
+})
+
 router.get('/live', async (req: Request, res: Response) => {
     const includeDetails = (req.query.details === 'true') || (req.query.details === '1')
 

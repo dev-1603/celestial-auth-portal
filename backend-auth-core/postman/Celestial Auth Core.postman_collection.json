@@ -1,10 +1,221 @@
 {
   "info": {
     "name": "Celestial Auth Core",
-    "description": "Postman collection for Celestial Auth Core API - Multi-method authentication",
+    "description": "Postman collection for Celestial Auth Core API - Multi-method authentication.\n\n**Route structure:** Root (/) and health (/health, /health/live, /health/ready) are unversioned. All auth endpoints are under /api/v1.\n\n**Environments:** Use **Local** or **Development** and set the `baseUrl` variable.\n- **Local**: baseUrl = http://localhost:5001\n- **Development**: baseUrl = your dev API URL (e.g. https://auth-dev.example.com)",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
+    {
+      "name": "Health & Root (Unversioned)",
+      "item": [
+        {
+          "name": "API Root (GET /)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has message', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('message');",
+                  "    pm.expect(json.message).to.include('Celestial Auth');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/",
+              "host": ["{{baseUrl}}"],
+              "path": [""]
+            },
+            "description": "Unversioned API root. Returns a simple message indicating the API is available."
+          },
+          "response": []
+        },
+        {
+          "name": "Health (GET /health)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Response has status and service', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('status', 'ok');",
+                  "    pm.expect(json).to.have.property('service');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health",
+              "host": ["{{baseUrl}}"],
+              "path": ["health"]
+            },
+            "description": "Unversioned simple liveness. Returns status and service name."
+          },
+          "response": []
+        },
+        {
+          "name": "Health Live (GET /health/live)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 503', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
+                  "});",
+                  "pm.test('Response has status and timestamp', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('status');",
+                  "    pm.expect(json).to.have.property('timestamp');",
+                  "    if (pm.response.code === 200) pm.expect(json.status).to.eql('ok');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/live",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "live"]
+            },
+            "description": "Unversioned liveness with DB check. Use for k8s liveness probes. Add ?details=true for pool info."
+          },
+          "response": []
+        },
+        {
+          "name": "Health Live (with details)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 503', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
+                  "});",
+                  "pm.test('Response has status, dialect, latencyMs, timestamp', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('status');",
+                  "    pm.expect(json).to.have.property('dialect');",
+                  "    pm.expect(json).to.have.property('latencyMs');",
+                  "    pm.expect(json).to.have.property('timestamp');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/live?details=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "live"],
+              "query": [
+                {
+                  "key": "details",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Same as /health/live with details=true for pool info in response."
+          },
+          "response": []
+        },
+        {
+          "name": "Health Ready (GET /health/ready)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 503', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
+                  "});",
+                  "pm.test('Response has status and timestamp', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('status');",
+                  "    pm.expect(json).to.have.property('timestamp');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ready",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "ready"]
+            },
+            "description": "Unversioned readiness with DB check. Use for k8s readiness probes. Add ?details=true for pool info."
+          },
+          "response": []
+        },
+        {
+          "name": "Health Ready (with details)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200 or 503', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 503]);",
+                  "});",
+                  "pm.test('Response has status, dialect, latencyMs, timestamp', () => {",
+                  "    const json = pm.response.json();",
+                  "    pm.expect(json).to.have.property('status');",
+                  "    pm.expect(json).to.have.property('dialect');",
+                  "    pm.expect(json).to.have.property('latencyMs');",
+                  "    pm.expect(json).to.have.property('timestamp');",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/health/ready?details=true",
+              "host": ["{{baseUrl}}"],
+              "path": ["health", "ready"],
+              "query": [
+                {
+                  "key": "details",
+                  "value": "true"
+                }
+              ]
+            },
+            "description": "Same as /health/ready with details=true for pool info in response."
+          },
+          "response": []
+        }
+      ],
+      "description": "Unversioned root and health endpoints (not under /api/v1). Use for load balancers and liveness/readiness probes."
+    },
     {
       "name": "Email/Password Auth",
       "item": [
@@ -15,9 +226,16 @@
               "listen": "test",
               "script": {
                 "exec": [
+                  "pm.test('Status is 200, 401, or 400', () => {",
+                  "    pm.expect(pm.response.code).to.be.oneOf([200, 401, 400]);",
+                  "});",
                   "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('accessToken');",
+                  "    if (j.accessToken) pm.environment.set('accessToken', j.accessToken);",
+                  "} else {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.satisfy((o) => o.error !== undefined || o.details !== undefined);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -26,133 +244,101 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your-password\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "login"]
-            },
-            "description": "Login with email and password. Returns access token and sets refresh token cookie."
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"your-password\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "login"]},
+            "description": "Login with email and password. Returns access token (200), invalid credentials (401), or validation error (400)."
           },
-          "response": []
-        },
-        {
-          "name": "Login - Invalid Credentials",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"wrong@example.com\",\n  \"password\": \"wrong-password\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "login"]
-            },
-            "description": "Test invalid credentials - should return 401"
-          },
-          "response": []
-        },
-        {
-          "name": "Login - Missing Fields",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/login",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "login"]
-            },
-            "description": "Test missing password - should return 400"
-          },
-          "response": []
+          "response": [
+            {"name": "Success", "originalRequest": {"method": "POST", "url": {"raw": "{{baseUrl}}/api/v1/auth/email/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "login"]}}, "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"tenantSlug\": \"acme\",\n    \"role\": \"USER\"\n  }\n}"},
+            {"name": "Invalid Credentials", "originalRequest": {"method": "POST", "url": {"raw": "{{baseUrl}}/api/v1/auth/email/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "login"]}}, "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Invalid credentials\"\n}"},
+            {"name": "Missing Fields", "originalRequest": {"method": "POST", "url": {"raw": "{{baseUrl}}/api/v1/auth/email/login", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "login"]}}, "status": "Bad Request", "code": 400, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Email and password are required\",\n  \"code\": \"VALIDATION\"\n}"}
+          ]
         },
         {
           "name": "Refresh Token",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
+                  "if (pm.response.code === 200) {",
+                  "    pm.expect(pm.response.json()).to.have.property('accessToken');",
+                  "} else {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/refresh",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "refresh"]
-            },
-            "description": "Refresh access token using refresh token cookie. Cookie must be set from login."
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/refresh", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "refresh"]},
+            "description": "Refresh access token using refresh token cookie."
           },
-          "response": []
+          "response": [
+            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\"\n}"},
+            {"name": "No or Invalid Cookie", "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"No refresh token provided\"\n}"}
+          ]
         },
         {
           "name": "Get Current User",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.expect(pm.response.code).to.be.oneOf([200, 401]);",
+                  "if (pm.response.code === 200) {",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('userId');",
+                  "    pm.expect(j).to.have.property('email');",
+                  "    pm.expect(j).to.have.property('role');",
+                  "} else {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "GET",
-            "header": [
-              {
-                "key": "Authorization",
-                "value": "Bearer {{accessToken}}",
-                "type": "text"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/me",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "me"]
-            },
-            "description": "Get current authenticated user info. Requires Bearer token."
+            "header": [{"key": "Authorization", "value": "Bearer {{accessToken}}", "type": "text"}],
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/me", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "me"]},
+            "description": "Get current user. Requires Bearer token."
           },
-          "response": []
+          "response": [
+            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"userId\": \"clxx123\",\n  \"email\": \"user@example.com\",\n  \"tenantId\": \"tenant-abc\",\n  \"tenantSlug\": \"acme\",\n  \"role\": \"USER\",\n  \"apps\": []\n}"},
+            {"name": "Unauthorized", "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Authorization header must be in the format: Bearer <token>\"\n}"}
+          ]
         },
         {
           "name": "Logout",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test('Status is 200', () => pm.response.to.have.status(200));",
+                  "pm.expect(pm.response.json()).to.have.property('success', true);"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/logout",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "logout"]
-            },
-            "description": "Logout - clears refresh token cookie"
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/logout", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "logout"]},
+            "description": "Logout - clears refresh token cookie."
           },
-          "response": []
+          "response": [
+            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"success\": true\n}"}
+          ]
         }
       ],
       "description": "Email/password authentication endpoints"
@@ -167,11 +353,13 @@
               "listen": "test",
               "script": {
                 "exec": [
+                  "pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
                   "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    if (jsonData.otp) {",
-                  "        pm.environment.set('otpCode', jsonData.otp);",
-                  "    }",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.satisfy((o) => o.message !== undefined || o.otp !== undefined);",
+                  "    if (j.otp) pm.environment.set('otpCode', j.otp);",
+                  "} else {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -180,57 +368,15 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/otp/send",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "otp", "send"]
-            },
-            "description": "Send OTP code to email. In development, the code is returned in response."
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/otp/send", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "otp", "send"]},
+            "description": "Send OTP to email. In development the code is returned in response."
           },
-          "response": []
-        },
-        {
-          "name": "Send OTP - User Not Found",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"missing@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/otp/send",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "otp", "send"]
-            },
-            "description": "Test with non-existent user - should return 404"
-          },
-          "response": []
+          "response": [
+            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"message\": \"OTP sent to email\",\n  \"otp\": \"123456\"\n}"},
+            {"name": "User Not Found", "status": "Not Found", "code": 404, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"User not found\"\n}"}
+          ]
         },
         {
           "name": "Verify OTP",
@@ -239,9 +385,13 @@
               "listen": "test",
               "script": {
                 "exec": [
+                  "pm.expect(pm.response.code).to.be.oneOf([200, 401, 400]);",
                   "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('accessToken');",
+                  "    if (j.accessToken) pm.environment.set('accessToken', j.accessToken);",
+                  "} else {",
+                  "    pm.expect(pm.response.json()).to.satisfy((o) => o.error !== undefined || o.details !== undefined);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -250,85 +400,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"{{otpCode}}\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/otp/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "otp", "verify"]
-            },
-            "description": "Verify OTP code and login. Use OTP code from send response or email."
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"{{otpCode}}\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/email/otp/verify", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "email", "otp", "verify"]},
+            "description": "Verify OTP and login. Use code from Send OTP response or email."
           },
-          "response": []
-        },
-        {
-          "name": "Verify OTP - Invalid Code",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\",\n  \"code\": \"000000\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/otp/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "otp", "verify"]
-            },
-            "description": "Test with invalid OTP code - should return 401"
-          },
-          "response": []
-        },
-        {
-          "name": "Verify OTP - Missing Fields",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/email/otp/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "email", "otp", "verify"]
-            },
-            "description": "Test missing code - should return 400"
-          },
-          "response": []
+          "response": [
+            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"role\": \"USER\"\n  }\n}"},
+            {"name": "Invalid Code", "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Invalid OTP code\"\n}"},
+            {"name": "Missing Fields", "status": "Bad Request", "code": 400, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Email and code are required\",\n  \"code\": \"VALIDATION\"\n}"}
+          ]
         }
       ],
       "description": "Email OTP authentication endpoints"
@@ -343,11 +424,13 @@
               "listen": "test",
               "script": {
                 "exec": [
+                  "pm.expect(pm.response.code).to.be.oneOf([200, 404]);",
                   "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    if (jsonData.magicLink) {",
-                  "        pm.environment.set('magicLinkUrl', jsonData.magicLink);",
-                  "    }",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.satisfy((o) => o.message !== undefined || o.magicLink !== undefined);",
+                  "    if (j.magicLink) pm.environment.set('magicLinkUrl', j.magicLink);",
+                  "} else {",
+                  "    pm.expect(pm.response.json()).to.have.property('error');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -356,57 +439,15 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/magic-link/send",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "magic-link", "send"]
-            },
-            "description": "Send magic link to email. In development, the link is returned in response."
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/magic-link/send", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "magic-link", "send"]},
+            "description": "Send magic link to email. In development the link is returned in response."
           },
-          "response": []
-        },
-        {
-          "name": "Send Magic Link - User Not Found",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"missing@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/magic-link/send",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "magic-link", "send"]
-            },
-            "description": "Test with non-existent user - should return 404"
-          },
-          "response": []
+          "response": [
+            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"message\": \"Magic link sent to email\",\n  \"magicLink\": \"http://localhost:5001/api/v1/auth/magic-link/verify?token=abc&email=user@example.com\"\n}"},
+            {"name": "User Not Found", "status": "Not Found", "code": 404, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"User not found\"\n}"}
+          ]
         },
         {
           "name": "Verify Magic Link (GET)",
@@ -415,8 +456,9 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "if (pm.response.code === 200 || pm.response.code === 302) {",
-                  "    // Magic link verified",
+                  "pm.expect(pm.response.code).to.be.oneOf([200, 302]);",
+                  "if (pm.response.code === 200) {",
+                  "    pm.expect(pm.response.json()).to.have.property('accessToken');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -426,30 +468,13 @@
           "request": {
             "method": "GET",
             "header": [],
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify?token={{magicLinkToken}}&email=user@example.com&redirect=http://localhost:3000/app",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "magic-link", "verify"],
-              "query": [
-                {
-                  "key": "token",
-                  "value": "{{magicLinkToken}}",
-                  "description": "Token from magic link email"
-                },
-                {
-                  "key": "email",
-                  "value": "user@example.com"
-                },
-                {
-                  "key": "redirect",
-                  "value": "http://localhost:3000/app",
-                  "description": "Optional redirect URL"
-                }
-              ]
-            },
-            "description": "Verify magic link via GET (browser click). Can redirect to frontend."
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/magic-link/verify?token={{magicLinkToken}}&email=user@example.com&redirect=http://localhost:3000/app", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "magic-link", "verify"], "query": [{"key": "token", "value": "{{magicLinkToken}}"}, {"key": "email", "value": "user@example.com"}, {"key": "redirect", "value": "http://localhost:3000/app"}]},
+            "description": "Verify magic link via GET (e.g. browser click). Can redirect to frontend."
           },
-          "response": []
+          "response": [
+            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"role\": \"USER\"\n  }\n}"},
+            {"name": "Redirect", "status": "Found", "code": 302, "header": [{"key": "Location", "value": "http://localhost:3000/app"}], "body": ""}
+          ]
         },
         {
           "name": "Verify Magic Link (POST)",
@@ -458,9 +483,13 @@
               "listen": "test",
               "script": {
                 "exec": [
+                  "pm.expect(pm.response.code).to.be.oneOf([200, 401, 400]);",
                   "if (pm.response.code === 200) {",
-                  "    const jsonData = pm.response.json();",
-                  "    pm.environment.set('accessToken', jsonData.accessToken);",
+                  "    const j = pm.response.json();",
+                  "    pm.expect(j).to.have.property('accessToken');",
+                  "    if (j.accessToken) pm.environment.set('accessToken', j.accessToken);",
+                  "} else {",
+                  "    pm.expect(pm.response.json()).to.satisfy((o) => o.error !== undefined || o.details !== undefined);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -469,85 +498,16 @@
           ],
           "request": {
             "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"{{magicLinkToken}}\",\n  \"email\": \"user@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "magic-link", "verify"]
-            },
-            "description": "Verify magic link via POST (API). Use token from send response or email."
+            "header": [{"key": "Content-Type", "value": "application/json"}],
+            "body": {"mode": "raw", "raw": "{\n  \"token\": \"{{magicLinkToken}}\",\n  \"email\": \"user@example.com\"\n}", "options": {"raw": {"language": "json"}}},
+            "url": {"raw": "{{baseUrl}}/api/v1/auth/magic-link/verify", "host": ["{{baseUrl}}"], "path": ["api", "v1", "auth", "magic-link", "verify"]},
+            "description": "Verify magic link via POST. Use token from Send Magic Link response or email."
           },
-          "response": []
-        },
-        {
-          "name": "Verify Magic Link - Invalid Token",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"invalid-token\",\n  \"email\": \"user@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "magic-link", "verify"]
-            },
-            "description": "Test with invalid token - should return 401"
-          },
-          "response": []
-        },
-        {
-          "name": "Verify Magic Link - Missing Fields",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"user@example.com\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
-            },
-            "url": {
-              "raw": "{{baseUrl}}/api/v1/auth/magic-link/verify",
-              "host": ["{{baseUrl}}"],
-              "path": ["api", "v1", "auth", "magic-link", "verify"]
-            },
-            "description": "Test missing token - should return 400"
-          },
-          "response": []
+          "response": [
+            {"name": "Success", "status": "OK", "code": 200, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"accessToken\": \"eyJ...\",\n  \"user\": {\n    \"id\": \"clxx123\",\n    \"email\": \"user@example.com\",\n    \"tenantId\": \"tenant-abc\",\n    \"role\": \"USER\"\n  }\n}"},
+            {"name": "Invalid Token", "status": "Unauthorized", "code": 401, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Invalid or expired magic link\"\n}"},
+            {"name": "Missing Fields", "status": "Bad Request", "code": 400, "header": [{"key": "Content-Type", "value": "application/json"}], "body": "{\n  \"error\": \"Token and email are required\",\n  \"code\": \"VALIDATION\"\n}"}
+          ]
         }
       ],
       "description": "Magic link authentication endpoints"
@@ -557,6 +517,26 @@
     {
       "key": "baseUrl",
       "value": "http://localhost:5001",
+      "type": "string"
+    },
+    {
+      "key": "accessToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "otpCode",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "magicLinkToken",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "magicLinkUrl",
+      "value": "",
       "type": "string"
     }
   ]
