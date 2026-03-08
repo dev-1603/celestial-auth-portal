@@ -37,7 +37,7 @@
 - `GET /api/v1/auth/oauth/{provider}/initiate` - Initiate OAuth flow (redirects to provider)
 - `GET /api/v1/auth/oauth/{provider}/callback` - Handle OAuth callback
 
-### Supported Providers (15 total)
+### Supported Providers (16 total)
 1. **Google** - OAuth2 + OpenID Connect
 2. **GitHub** - OAuth2
 3. **Microsoft** - OAuth2 + OpenID Connect
