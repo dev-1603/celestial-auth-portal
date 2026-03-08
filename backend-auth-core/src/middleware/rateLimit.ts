@@ -56,8 +56,10 @@ export function createLoginRateLimiter() {
     legacyHeaders: false, // Disable `X-RateLimit-*` headers
     keyGenerator: (req: Request) => {
       // Limit per IP + email combination
+      // Use ipKeyGenerator to properly handle IPv6 addresses
       const email = req.body?.email || ''
-      return `${ipKey(req)}:${email}`
+      const ip = ipKeyGenerator(req.ip || 'unknown', 56)
+      return `${ip}:${email}`
     },
     skip: (req: Request) => {
       // Skip rate limiting if email is not provided
@@ -87,8 +89,10 @@ export function createOTPSendRateLimiter() {
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
       // Limit per email or phone
+      // Use ipKeyGenerator to properly handle IPv6 addresses
       const identifier = req.body?.email || req.body?.phone || req.body?.target || ''
-      return `${ipKey(req)}:${identifier}`
+      const ip = ipKeyGenerator(req.ip || 'unknown', 56)
+      return `${ip}:${identifier}`
     },
     skip: (req: Request) => {
       // Skip if no identifier provided
@@ -117,8 +121,10 @@ export function createPasswordResetRateLimiter() {
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
       // Limit per email
+      // Use ipKeyGenerator to properly handle IPv6 addresses
       const email = req.body?.email || ''
-      return `${ipKey(req)}:${email}`
+      const ip = ipKeyGenerator(req.ip || 'unknown', 56)
+      return `${ip}:${email}`
     },
     skip: (req: Request) => {
       return !req.body?.email
@@ -146,7 +152,8 @@ export function createIPRateLimiter() {
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
-      return ipKey(req)
+      // Use ipKeyGenerator to properly handle IPv6 addresses
+      return ipKeyGenerator(req.ip || 'unknown', 56)
     },
   })
 }
@@ -172,7 +179,8 @@ export function createUserRateLimiter() {
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
       // Use user ID if available, otherwise fall back to IP
-      const userId = (req as any).user?.id || ipKey(req)
+      // Use ipKeyGenerator to properly handle IPv6 addresses
+      const userId = (req as any).user?.id || ipKeyGenerator(req.ip || 'unknown', 56)
       return `user:${userId}`
     },
   })
@@ -198,8 +206,10 @@ export function createOAuthRateLimiter() {
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
       // Limit per IP + provider
+      // Use ipKeyGenerator to properly handle IPv6 addresses
       const provider = req.params?.provider || ''
-      return `${ipKey(req)}:oauth:${provider}`
+      const ip = ipKeyGenerator(req.ip || 'unknown', 56)
+      return `${ip}:oauth:${provider}`
     },
   })
 }
@@ -224,8 +234,10 @@ export function createMagicLinkRateLimiter() {
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
       // Limit per email
+      // Use ipKeyGenerator to properly handle IPv6 addresses
       const email = req.body?.email || req.query?.email || ''
-      return `${ipKey(req)}:${email}`
+      const ip = ipKeyGenerator(req.ip || 'unknown', 56)
+      return `${ip}:${email}`
     },
     skip: (req: Request) => {
       return !req.body?.email && !req.query?.email
