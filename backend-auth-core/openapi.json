@@ -830,6 +830,198 @@
         }
       }
     },
+    "/api/v1/auth/email/password-reset/request": {
+      "post": {
+        "tags": [
+          "Auth - Email"
+        ],
+        "summary": "Request password reset",
+        "operationId": "authEmailPasswordResetRequest",
+        "description": "Generates a password reset token and sends it to the user's email address.\nThe token is stored in PasswordReset table and expires in 1 hour.\nFor security, always returns success even if user doesn't exist (prevents email enumeration).\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success (always returns this, even if user doesn't exist)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "If an account with that email exists, a password reset link has been sent."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "Too many requests (rate limited)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email/password-reset/verify": {
+      "post": {
+        "tags": [
+          "Auth - Email"
+        ],
+        "summary": "Complete password reset",
+        "operationId": "authEmailPasswordResetVerify",
+        "description": "Verifies the password reset token and updates the user's password.\nAlso supports GET method for browser redirects from email links.\nToken must be valid and not expired. After successful reset, all reset tokens for the user are deleted.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "email",
+                  "password"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Password reset token from email",
+                    "example": "abc123def456..."
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "password": {
+                    "type": "string",
+                    "description": "New password (must meet password policy requirements)",
+                    "minLength": 8,
+                    "example": "NewSecurePassword123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Password reset token (for GET requests)"
+          },
+          {
+            "in": "query",
+            "name": "email",
+            "schema": {
+              "type": "string",
+              "format": "email"
+            },
+            "description": "User email (for GET requests)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Password reset successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Password has been reset successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing fields or password doesn't meet policy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "missingFields": {
+                    "value": {
+                      "error": "Reset token, email, and new password are required"
+                    }
+                  },
+                  "passwordPolicy": {
+                    "value": {
+                      "error": "Password must be at least 8 characters long"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, or used token, or email mismatch",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalidToken": {
+                    "value": {
+                      "error": "Invalid or expired password reset token"
+                    }
+                  },
+                  "emailMismatch": {
+                    "value": {
+                      "error": "Email does not match reset token"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/auth/magic-link/send": {
       "post": {
         "tags": [
@@ -1105,6 +1297,722 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/enable": {
+      "post": {
+        "tags": [
+          "Auth - MFA"
+        ],
+        "summary": "Enable MFA (generate TOTP secret)",
+        "operationId": "authMfaEnable",
+        "description": "Generates a TOTP secret and QR code for the user to set up MFA with an authenticator app.\nStores the secret in AuthIdentity metadata (unverified until verify-setup is called).\nRequires authentication.\n",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "MFA setup initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "secret": {
+                      "type": "string",
+                      "description": "TOTP secret (base32 encoded, for manual entry)",
+                      "example": "JBSWY3DPEHPK3PXP"
+                    },
+                    "qrCode": {
+                      "type": "string",
+                      "description": "QR code as data URL (base64 image)",
+                      "example": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+                    },
+                    "manualEntryKey": {
+                      "type": "string",
+                      "description": "Same as secret, for manual entry in authenticator apps",
+                      "example": "JBSWY3DPEHPK3PXP"
+                    },
+                    "backupCodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Backup codes for account recovery (8 codes)",
+                      "example": [
+                        "12345678",
+                        "87654321",
+                        "..."
+                      ]
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Scan the QR code with your authenticator app, then verify with a code to complete setup."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "MFA already enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "MFA is disabled in config",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/verify-setup": {
+      "post": {
+        "tags": [
+          "Auth - MFA"
+        ],
+        "summary": "Verify MFA setup",
+        "operationId": "authMfaVerifySetup",
+        "description": "Verifies the TOTP code during MFA setup to confirm the user has configured their authenticator app correctly.\nMarks MFA as verified and enabled. Requires authentication.\n",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "TOTP code from authenticator app (typically 6 digits)",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MFA successfully enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "MFA has been successfully enabled for your account"
+                    },
+                    "backupCodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Backup codes (returned one more time for user to save)"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "MFA setup not started or already verified",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid TOTP code or unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/verify": {
+      "post": {
+        "tags": [
+          "Auth - MFA"
+        ],
+        "summary": "Verify MFA code during login",
+        "operationId": "authMfaVerify",
+        "description": "Verifies a TOTP code or backup code during login when MFA is required.\nCalled after initial authentication (email/password, etc.) if MFA is enabled.\nReturns access token and refresh cookie on success.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "code",
+                  "email"
+                ],
+                "properties": {
+                  "code": {
+                    "type": "string",
+                    "description": "TOTP code from authenticator app or backup code",
+                    "example": "123456"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "userId": {
+                    "type": "string",
+                    "description": "User ID (optional, for internal use)"
+                  },
+                  "tenantId": {
+                    "type": "string",
+                    "description": "Tenant ID (optional, for internal use)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MFA verified and logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "celestial_refresh_token (httpOnly)",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing code or email, or MFA not enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid MFA code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/mfa/disable": {
+      "post": {
+        "tags": [
+          "Auth - MFA"
+        ],
+        "summary": "Disable MFA",
+        "operationId": "authMfaDisable",
+        "description": "Disables MFA for the authenticated user. Requires password verification for security.\nRemoves TOTP secret and backup codes from AuthIdentity metadata.\n",
+        "security": [
+          {
+            "bearerAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "password"
+                ],
+                "properties": {
+                  "password": {
+                    "type": "string",
+                    "description": "User's password (required for security)",
+                    "example": "CurrentPassword123!"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "MFA successfully disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "MFA has been successfully disabled for your account"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing password or MFA not enabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid password or unauthorized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/oauth/providers": {
+      "get": {
+        "tags": [
+          "Auth - OAuth"
+        ],
+        "summary": "Get list of enabled OAuth providers",
+        "description": "Returns a list of OAuth providers that are enabled in the configuration.\nFrontend can use this to dynamically render OAuth login buttons.\n",
+        "operationId": "getOAuthProviders",
+        "responses": {
+          "200": {
+            "description": "List of enabled OAuth providers",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "providers": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "example": "google"
+                          },
+                          "displayName": {
+                            "type": "string",
+                            "example": "Google"
+                          },
+                          "logo": {
+                            "type": "string",
+                            "example": "/logos/google.svg"
+                          },
+                          "buttonVariant": {
+                            "type": "string",
+                            "example": "outline"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/oauth/{provider}/initiate": {
+      "get": {
+        "tags": [
+          "Auth - OAuth"
+        ],
+        "summary": "Initiate OAuth flow",
+        "description": "Initiates OAuth authentication flow by redirecting the user to the OAuth provider's authorization page.\n\n**Flow:**\n1. User clicks \"Sign in with {Provider}\" button\n2. Frontend redirects to this endpoint\n3. Backend generates CSRF state token\n4. Backend redirects to OAuth provider\n5. User authorizes on provider's page\n6. Provider redirects back to `/auth/oauth/{provider}/callback`\n\n**State Parameter:**\n- CSRF protection token stored in httpOnly cookie\n- Validated in callback to prevent CSRF attacks\n\n**Redirect Parameter:**\n- Optional: URL to redirect to after successful login\n- Stored in cookie and used in callback\n",
+        "operationId": "initiateOAuth",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "github",
+                "microsoft"
+              ]
+            },
+            "description": "OAuth provider ID",
+            "example": "google"
+          },
+          {
+            "in": "query",
+            "name": "redirect",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uri"
+            },
+            "description": "URL to redirect to after successful login",
+            "example": "http://localhost:3000/app"
+          }
+        ],
+        "responses": {
+          "302": {
+            "description": "Redirect to OAuth provider authorization page",
+            "headers": {
+              "Location": {
+                "description": "OAuth provider authorization URL",
+                "schema": {
+                  "type": "string",
+                  "example": "https://accounts.google.com/o/oauth2/v2/auth?client_id=..."
+                }
+              },
+              "Set-Cookie": {
+                "description": "CSRF state token cookie",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/oauth/{provider}/callback": {
+      "get": {
+        "tags": [
+          "Auth - OAuth"
+        ],
+        "summary": "Handle OAuth callback",
+        "description": "Handles the OAuth callback from the provider after user authorization.\n\n**Flow:**\n1. OAuth provider redirects here with `code` and `state` query parameters\n2. Backend validates state (CSRF protection)\n3. Backend exchanges authorization code for access token\n4. Backend fetches user info from provider\n5. Backend finds or creates user account\n6. Backend links OAuth account to user (if email matches existing user)\n7. Backend issues JWT tokens\n8. Backend redirects to frontend (if redirect URL provided) or returns JSON\n\n**Account Linking:**\n- If OAuth email matches existing user, OAuth account is linked\n- User can sign in with either method after linking\n- Controlled by `allowLinking` config (default: true)\n\n**New User Signup:**\n- If email doesn't exist, new user account is created\n- Controlled by `allowSignup` config (default: true)\n",
+        "operationId": "handleOAuthCallback",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "provider",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "google",
+                "github",
+                "microsoft"
+              ]
+            },
+            "description": "OAuth provider ID",
+            "example": "google"
+          },
+          {
+            "in": "query",
+            "name": "code",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Authorization code from OAuth provider"
+          },
+          {
+            "in": "query",
+            "name": "state",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "CSRF state token (must match cookie)"
+          },
+          {
+            "in": "query",
+            "name": "error",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "OAuth error (if user denied authorization)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OAuth callback successful, user logged in",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Refresh token cookie",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string",
+                      "description": "JWT access token",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Redirect to frontend (if redirect URL was provided)",
+            "headers": {
+              "Location": {
+                "description": "Frontend URL with access token",
+                "schema": {
+                  "type": "string",
+                  "example": "http://localhost:3000/app?token=eyJ..."
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "409": {
+            "description": "Account linking not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "An account with this email already exists. Please use a different sign-in method."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/phone/otp/send": {
+      "post": {
+        "tags": [
+          "Auth - Phone"
+        ],
+        "summary": "Send OTP code to phone number",
+        "description": "Generates a one-time password (OTP) code and sends it to the user's phone number via SMS.\nThe code is hashed and stored in the database. The code expires after the configured time.\n\n**Phone Number Format:**\n- Must be in E.164 format (e.g., +1234567890)\n- 10-digit US numbers will be automatically normalized to +1XXXXXXXXXX\n\n**Development Mode:**\n- When `SMS_PROVIDER=console`, the OTP code is logged to console\n- The OTP code is also returned in the response for testing\n",
+        "operationId": "sendPhoneOTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "Phone number in E.164 format (e.g., +1234567890) or 10-digit US number",
+                    "example": "+1234567890"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP code sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "OTP sent to phone"
+                    },
+                    "otp": {
+                      "type": "string",
+                      "description": "OTP code (only in development mode)",
+                      "example": "123456"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
+          }
+        }
+      }
+    },
+    "/auth/phone/otp/verify": {
+      "post": {
+        "tags": [
+          "Auth - Phone"
+        ],
+        "summary": "Verify OTP code and login",
+        "description": "Verifies the OTP code sent to the user's phone number and logs them in if valid.\nReturns JWT access token and sets refresh token cookie.\n\n**Security:**\n- Codes expire after the configured time\n- Failed attempts are tracked\n- Maximum attempts are enforced (default: 5)\n- Once verified, the code is marked as used and cannot be reused\n",
+        "operationId": "verifyPhoneOTP",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "phone",
+                  "code"
+                ],
+                "properties": {
+                  "phone": {
+                    "type": "string",
+                    "description": "Phone number in E.164 format (e.g., +1234567890) or 10-digit US number",
+                    "example": "+1234567890"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "OTP code received via SMS",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP verified successfully, user logged in",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Refresh token cookie",
+                "schema": {
+                  "type": "string",
+                  "example": "celestial_refresh_token=...; HttpOnly; Secure; SameSite=Strict"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "accessToken": {
+                      "type": "string",
+                      "description": "JWT access token",
+                      "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    },
+                    "user": {
+                      "$ref": "#/components/schemas/User"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "#/components/responses/BadRequest"
+          },
+          "401": {
+            "$ref": "#/components/responses/Unauthorized"
+          },
+          "403": {
+            "$ref": "#/components/responses/Forbidden"
+          },
+          "404": {
+            "$ref": "#/components/responses/NotFound"
+          },
+          "500": {
+            "$ref": "#/components/responses/InternalServerError"
           }
         }
       }

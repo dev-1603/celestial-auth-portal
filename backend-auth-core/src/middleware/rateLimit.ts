@@ -19,9 +19,14 @@
  * ```
  */
 
-import rateLimit from 'express-rate-limit'
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit'
 import { Request } from 'express'
 import { getAuthConfig } from '../config/auth-config.loader'
+
+/** Normalize IP for rate limit key (IPv6-safe). */
+function ipKey(req: Request): string {
+  return req.ip ? ipKeyGenerator(req.ip) : 'unknown'
+}
 
 /**
  * Get rate limit config from auth.json
@@ -52,7 +57,7 @@ export function createLoginRateLimiter() {
     keyGenerator: (req: Request) => {
       // Limit per IP + email combination
       const email = req.body?.email || ''
-      return `${req.ip}:${email}`
+      return `${ipKey(req)}:${email}`
     },
     skip: (req: Request) => {
       // Skip rate limiting if email is not provided
@@ -83,7 +88,7 @@ export function createOTPSendRateLimiter() {
     keyGenerator: (req: Request) => {
       // Limit per email or phone
       const identifier = req.body?.email || req.body?.phone || req.body?.target || ''
-      return `${req.ip}:${identifier}`
+      return `${ipKey(req)}:${identifier}`
     },
     skip: (req: Request) => {
       // Skip if no identifier provided
@@ -113,7 +118,7 @@ export function createPasswordResetRateLimiter() {
     keyGenerator: (req: Request) => {
       // Limit per email
       const email = req.body?.email || ''
-      return `${req.ip}:${email}`
+      return `${ipKey(req)}:${email}`
     },
     skip: (req: Request) => {
       return !req.body?.email
@@ -141,7 +146,7 @@ export function createIPRateLimiter() {
     standardHeaders: true,
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
-      return req.ip || 'unknown'
+      return ipKey(req)
     },
   })
 }
@@ -167,7 +172,7 @@ export function createUserRateLimiter() {
     legacyHeaders: false,
     keyGenerator: (req: Request) => {
       // Use user ID if available, otherwise fall back to IP
-      const userId = (req as any).user?.id || req.ip
+      const userId = (req as any).user?.id || ipKey(req)
       return `user:${userId}`
     },
   })
@@ -194,7 +199,7 @@ export function createOAuthRateLimiter() {
     keyGenerator: (req: Request) => {
       // Limit per IP + provider
       const provider = req.params?.provider || ''
-      return `${req.ip}:oauth:${provider}`
+      return `${ipKey(req)}:oauth:${provider}`
     },
   })
 }
@@ -220,7 +225,7 @@ export function createMagicLinkRateLimiter() {
     keyGenerator: (req: Request) => {
       // Limit per email
       const email = req.body?.email || req.query?.email || ''
-      return `${req.ip}:${email}`
+      return `${ipKey(req)}:${email}`
     },
     skip: (req: Request) => {
       return !req.body?.email && !req.query?.email
