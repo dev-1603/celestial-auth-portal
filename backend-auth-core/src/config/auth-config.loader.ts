@@ -1,27 +1,31 @@
 /**
  * Auth Config Loader
- * 
- * Loads auth configuration that mirrors the frontend auth.json structure.
- * This ensures backend and frontend stay in sync on which methods are enabled.
- * 
+ *
+ * Loads auth configuration used by the backend. Keeps only backend-relevant
+ * fields (enabledMethods, passwordPolicy, mfa, methodsConfig, providers id/enabled,
+ * rateLimits, session, redirects). Frontend-only fields (displayName, logo,
+ * buttonVariant, security) live in the frontend auth.json.
+ *
  * Configuration is loaded from:
  * 1. Path specified in AUTH_CONFIG_PATH env var, or
- * 2. Default path: ../auth-client-vue/config/auth.json (relative to backend-auth-core)
- * 
+ * 2. Default path: config/auth.json (inside backend-auth-core)
+ *
  * Secrets (OAuth client secrets, JWT secrets, etc.) are NOT in the config file
  * and must be provided via environment variables.
  */
 
 import { readFileSync } from 'fs'
-import { join, resolve } from 'path'
+import path from 'path'
 import { fileURLToPath } from 'url'
-import { dirname } from 'path'
 
-const __filename = fileURLToPath(import.meta.url)
-const __dirname = dirname(__filename)
+// ESM has no __dirname; derive it from import.meta.url. (tsconfig is CommonJS so we suppress the check.)
+const __dirname = path.dirname(
+  // @ts-expect-error import.meta is valid at ESM runtime (package "type": "module"); TS only allows it for ESM module option
+  fileURLToPath(import.meta.url)
+)
 
-// Default path: go up from src/config to backend-auth-core root, then to auth-client-vue/config/auth.json
-const DEFAULT_CONFIG_PATH = resolve(__dirname, '../../..', 'auth-client-vue/config/auth.json')
+// Default path: backend-auth-core/config/auth.json (relative to this file: src/config -> root)
+const DEFAULT_CONFIG_PATH = path.resolve(__dirname, '..', '..', 'config/auth.json')
 
 /**
  * Auth config structure matching frontend auth.json
