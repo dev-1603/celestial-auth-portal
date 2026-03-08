@@ -14,16 +14,16 @@
  */
 
 import type { Request, Response, NextFunction } from 'express'
-import { isMethodEnabled, getOAuthProviderConfig, getMethodConfig } from '../../../config/auth-config.loader'
+import { getAuthConfig, isMethodEnabled, getOAuthProviderConfig, getMethodConfig } from '../../../config/auth-config.loader'
 import { handleOAuthCallback as handleOAuthCallbackService } from '../../../services/oauth.service'
 import {
-  findAuthIdentityByProvider,
   createAuthIdentity,
   findAuthIdentityWithUser,
 } from '../../../repositories/auth-identity.repository'
 import { findGlobalUserByEmail, createGlobalUser } from '../../../repositories/user.repository'
 import { findTenantUserLink } from '../../../repositories/user.repository'
 import { buildLoginTokens } from '../../../services/token.service'
+import { prisma } from '../../../lib/prisma'
 import type { JWTPayload } from '../../../lib/jwt'
 import type { GlobalRole } from '../../../lib/jwt'
 
@@ -77,23 +77,32 @@ export const handleOAuthCallback = async (
     // Exchange code for user info
     const oauthUserInfo = await handleOAuthCallbackService(provider, code as string, callbackUrl)
 
-    // Find existing AuthIdentity for this OAuth account
-    let authIdentity = await findAuthIdentityByProvider(provider, oauthUserInfo.providerUserId)
+    // Find existing AuthIdentity with user (single query instead of two)
+    const authIdentityWithUser = await findAuthIdentityWithUser(provider, oauthUserInfo.providerUserId)
 
-    // If AuthIdentity exists, get user and log in
-    if (authIdentity) {
-      const authIdentityWithUser = await findAuthIdentityWithUser(provider, oauthUserInfo.providerUserId)
-      if (authIdentityWithUser?.user) {
-        const user = authIdentityWithUser.user
-        const tenantId = user.tenantId || ''
-        const tenantSlug = user.tenantSlug
+    // If AuthIdentity exists, log user in
+    if (authIdentityWithUser?.user) {
+      const user = authIdentityWithUser.user
 
-        // Determine role
-        let role: GlobalRole = 'USER'
-        if (tenantId) {
-          const tenantLink = await findTenantUserLink(user.id, tenantId)
-          // Role determination logic can be enhanced here
+      // Check email verification requirement
+      const authConfig = getAuthConfig()
+      if (authConfig.requireVerifiedEmail === true && !user.isVerified) {
+        res.status(403).json({ error: 'Email not verified. Please verify your email before signing in.' })
+        return
+      }
+
+      const tenantId = user.tenantId || ''
+      const tenantSlug = user.tenantSlug
+
+      // Determine role from already-loaded memberships
+      let role: GlobalRole = 'USER'
+      if (tenantId) {
+        const memberships = (authIdentityWithUser as any).user?.memberships || []
+        const tenantLink = memberships.find((m: any) => m.tenantId === tenantId)
+        if (tenantLink?.isTenantOwner) {
+          role = 'OWNER'
         }
+      }
 
         // Build JWT payload
         const payload: JWTPayload = {
@@ -160,12 +169,25 @@ export const handleOAuthCallback = async (
       }
 
       const user = authIdentityWithUser.user
+
+      // Check email verification requirement for linked user
+      const authConfig = getAuthConfig()
+      if (authConfig.requireVerifiedEmail === true && !user.isVerified) {
+        res.status(403).json({ error: 'Email not verified. Please verify your email before signing in.' })
+        return
+      }
+
       const tenantId = user.tenantId || ''
       const tenantSlug = user.tenantSlug
 
+      // Determine role from already-loaded memberships
       let role: GlobalRole = 'USER'
       if (tenantId) {
-        const tenantLink = await findTenantUserLink(user.id, tenantId)
+        const memberships = (authIdentityWithUser as any).user?.memberships || []
+        const tenantLink = memberships.find((m: any) => m.tenantId === tenantId)
+        if (tenantLink?.isTenantOwner) {
+          role = 'OWNER'
+        }
       }
 
       const payload: JWTPayload = {
@@ -198,8 +220,32 @@ export const handleOAuthCallback = async (
     }
 
     // New user - create account
-    const config = getMethodConfig('oauth')
-    const allowSignup = config.allowSignup !== false // Default to true
+    const authConfig = getAuthConfig()
+    const methodConfig = getMethodConfig('oauth')
+    const allowSignup = methodConfig.allowSignup !== false // Default to true
+
+    // Enforce signupMode
+    const signupMode = authConfig.signupMode || 'open'
+    if (signupMode === 'closed') {
+      res.status(403).json({ error: 'New user signup is not allowed' })
+      return
+    }
+
+    if (signupMode === 'invite_only') {
+      // Check for valid invitation
+      const invitation = await prisma.invitation.findFirst({
+        where: {
+          email: oauthUserInfo.email.toLowerCase(),
+          accepted: false,
+          expiresAt: { gt: new Date() },
+        },
+      })
+
+      if (!invitation) {
+        res.status(403).json({ error: 'Signup requires a valid invitation' })
+        return
+      }
+    }
 
     if (!allowSignup) {
       res.status(403).json({ error: 'New user signup is not allowed via OAuth' })
@@ -207,6 +253,7 @@ export const handleOAuthCallback = async (
     }
 
     // Create new user (passwordHash is null for OAuth signup)
+    // OAuth users are considered verified if provider is trusted (default: true)
     const newUser = await createGlobalUser({
       email: oauthUserInfo.email,
       passwordHash: null, // OAuth users don't have passwords

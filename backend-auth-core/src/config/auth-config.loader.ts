@@ -17,6 +17,7 @@
 import { readFileSync } from 'fs'
 import path from 'path'
 import { fileURLToPath } from 'url'
+import { z } from 'zod'
 
 // ESM has no __dirname; derive it from import.meta.url. (tsconfig is CommonJS so we suppress the check.)
 const __dirname = path.dirname(
@@ -26,6 +27,98 @@ const __dirname = path.dirname(
 
 // Default path: backend-auth-core/config/auth.json (relative to this file: src/config -> root)
 const DEFAULT_CONFIG_PATH = path.resolve(__dirname, '..', '..', 'config/auth.json')
+
+/**
+ * Zod schema for AuthConfig validation
+ */
+const AuthConfigSchema = z.object({
+  enabledMethods: z.array(z.string()).min(1, 'enabledMethods must be a non-empty array'),
+  defaultMethod: z.string().optional(),
+  signupMode: z.enum(['invite_only', 'open', 'closed']).optional(),
+  passwordPolicy: z
+    .object({
+      minLength: z.number().optional(),
+      requireUpper: z.boolean().optional(),
+      requireLower: z.boolean().optional(),
+      requireNumber: z.boolean().optional(),
+      requireSpecial: z.boolean().optional(),
+      allowCommon: z.boolean().optional(),
+      maxAgeDays: z.number().optional(),
+      historyCount: z.number().optional(),
+      lockoutThreshold: z.number().optional(),
+      lockoutMinutes: z.number().optional(),
+    })
+    .optional(),
+  emailVerification: z.boolean().optional(),
+  requireVerifiedEmail: z.boolean().optional(),
+  mfa: z
+    .object({
+      required: z.boolean().optional(),
+      policy: z.enum(['required', 'optional', 'disabled']).optional(),
+      methods: z.array(z.string()).optional(),
+    })
+    .optional(),
+  methodsConfig: z.record(z.string(), z.any()).optional(),
+  providers: z
+    .object({
+      oauth: z
+        .array(
+          z.object({
+            id: z.string(),
+            enabled: z.boolean(),
+            displayName: z.string().optional(),
+            logo: z.string().optional(),
+            buttonVariant: z.string().optional(),
+          }).passthrough(), // Allow additional properties
+        )
+        .optional(),
+      sso: z
+        .array(
+          z.object({
+            id: z.string(),
+            type: z.string().optional(),
+            enabled: z.boolean(),
+            displayName: z.string().optional(),
+            logo: z.string().optional(),
+          }).passthrough(), // Allow additional properties
+        )
+        .optional(),
+    })
+    .optional(),
+  rateLimits: z
+    .object({
+      loginAttempts: z.number().optional(),
+      windowMinutesLogin: z.number().optional(),
+      resetRequests: z.number().optional(),
+      windowMinutesReset: z.number().optional(),
+      otpRequests: z.number().optional(),
+      windowMinutesOtp: z.number().optional(),
+      perIp: z.number().optional(),
+      perUser: z.number().optional(),
+    })
+    .optional(),
+  session: z
+    .object({
+      maxAgeDays: z.number().optional(),
+      idleTimeoutMinutes: z.number().optional(),
+      sameSite: z.enum(['strict', 'lax', 'none']).optional(),
+      secure: z.boolean().optional(),
+      cookieDomain: z.string().nullable().optional(),
+      refreshTokenRotation: z.boolean().optional(),
+      rememberMeMaxAgeDays: z.number().optional(),
+    })
+    .optional(),
+  redirects: z
+    .object({
+      afterLogin: z.string().optional(),
+      afterLogout: z.string().optional(),
+      firstLogin: z.string().optional(),
+      signupComplete: z.string().optional(),
+      afterMfaEnroll: z.string().optional(),
+      afterPasswordReset: z.string().optional(),
+    })
+    .optional(),
+}).passthrough() // Allow extra keys for forward compatibility
 
 /**
  * Auth config structure matching frontend auth.json
@@ -130,12 +223,18 @@ function loadAuthConfig(): AuthConfig {
 
   try {
     const configContent = readFileSync(configPath, 'utf-8')
-    const config = JSON.parse(configContent) as AuthConfig
+    const rawConfig = JSON.parse(configContent)
 
-    // Validate required fields
-    if (!config.enabledMethods || !Array.isArray(config.enabledMethods)) {
-      throw new Error('auth.json must have enabledMethods as an array')
+    // Validate with Zod schema
+    const validationResult = AuthConfigSchema.safeParse(rawConfig)
+    if (!validationResult.success) {
+      const errors = validationResult.error.errors
+        .map((e) => `${e.path.join('.')}: ${e.message}`)
+        .join('; ')
+      throw new Error(`Invalid auth config: ${errors}`)
     }
+
+    const config = validationResult.data as AuthConfig
 
     cachedConfig = config
     return config
@@ -148,6 +247,10 @@ function loadAuthConfig(): AuthConfig {
     }
     if (error instanceof SyntaxError) {
       throw new Error(`Invalid JSON in auth config file: ${error.message}`)
+    }
+    // Re-throw validation errors as-is
+    if (error.message?.startsWith('Invalid auth config:')) {
+      throw error
     }
     throw error
   }
@@ -166,6 +269,20 @@ export function getAuthConfig(): AuthConfig {
 export function isMethodEnabled(method: string): boolean {
   const config = getAuthConfig()
   return config.enabledMethods.includes(method)
+}
+
+/**
+ * Check if a method is enabled for mounting routes.
+ * Returns true only if method is in enabledMethods AND methodsConfig.<method>.enabled !== false
+ */
+export function isMethodEnabledToMount(method: string): boolean {
+  const config = getAuthConfig()
+  if (!config.enabledMethods.includes(method)) {
+    return false
+  }
+  const methodConfig = config.methodsConfig?.[method]
+  // If methodsConfig.<method>.enabled is explicitly false, disable even if in enabledMethods
+  return methodConfig?.enabled !== false
 }
 
 /**
