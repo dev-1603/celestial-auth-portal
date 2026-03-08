@@ -14,6 +14,11 @@ Celestial Auth Core is a headless, multi-method authentication service built wit
 - **Unified response**: All methods return the same JWT/session shape
 - **Multi-tenant**: Supports tenant-scoped authentication and authorization
 
+### Route structure and versioning
+
+- **Unversioned** (no `/api/v1` prefix): `GET /` (API root), `GET /health`, `GET /health/live`, `GET /health/ready`. Use these for load balancers and liveness/readiness probes.
+- **Versioned**: All auth and API routes live under `/api/v1` (e.g. `/api/v1/auth/email/login`). See Swagger at `/docs` and `src/docs/paths.*.ts` for the full list.
+
 ### Project Structure
 
 ```

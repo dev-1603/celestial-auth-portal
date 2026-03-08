@@ -65,6 +65,9 @@ const validateEnv = (envLike: typeof rawEnv): void => {
     assertNonEmpty(envLike.DATABASE_URL, 'DATABASE_URL')
     assertNonEmpty(envLike.DIRECT_URL, 'DIRECT_URL')
 
+    assertNonEmpty(envLike.JWT_ACCESS_SECRET, 'JWT_ACCESS_SECRET')
+    assertNonEmpty(envLike.JWT_REFRESH_SECRET, 'JWT_REFRESH_SECRET')
+
     if (envLike.DB_DIALECT === 'supabase') {
         assertNonEmpty(envLike.SUPABASE_URL, 'SUPABASE_URL')
         assertNonEmpty(envLike.SUPABASE_ANON_KEY, 'SUPABASE_ANON_KEY')

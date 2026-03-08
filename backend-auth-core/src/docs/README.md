@@ -21,7 +21,8 @@ Production-grade, framework-agnostic API docs for the Celestial Auth Core (Expre
 | File | Purpose |
 |------|--------|
 | `src/docs/openapi.base.ts` | Base spec: `info`, `servers`, `tags`, `components.schemas`, `components.securitySchemes` |
-| `src/docs/paths.auth.email.ts` | JSDoc `@openapi` blocks for `/health`, `/auth/email/login`, `/logout`, `/refresh`, `/me` |
+| `src/docs/paths.auth.email.ts` | JSDoc `@openapi` blocks for unversioned `/`, `/health`, `/health/live`, `/health/ready`, and versioned `/api/v1/auth/email/*` |
+| `src/docs/paths.auth.magicLink.ts` | JSDoc `@openapi` blocks for `/api/v1/auth/magic-link/*` |
 | `src/docs/swagger.config.ts` | Builds full spec: `getOpenApiSpec()` used by app and `docs:generate` |
 | `src/docs/generate-spec.ts` | Script to write `openapi.json` (for CI, client-gen, Spectral) |
 | `src/app.ts` | Mounts `/docs` (Swagger UI) and `/docs/spec` (JSON) |
@@ -32,8 +33,8 @@ Production-grade, framework-agnostic API docs for the Celestial Auth Core (Expre
 - **Errors:** `ErrorResponse` / `ValidationErrorResponse` schemas; 400/401/403/422 in path responses
 - **Multi-tenant:** Examples and descriptions reference tenantId/tenantSlug and TenantUserLink
 - **Operation IDs:** Every operation has `operationId` (e.g. `authEmailLogin`) for client generation
-- **Tags:** `Health`, `Auth - Email` for grouping in UI
-- **Versioning:** API under `/api/v1`; servers in base spec include `/api/v1`
+- **Tags:** `Health`, `Auth - Email`, `Auth - Magic Link` for grouping in UI
+- **Versioning:** Root (`/`) and health (`/health`, `/health/live`, `/health/ready`) are unversioned; all other API routes are under `/api/v1`
 
 ## Adding a new endpoint
 
@@ -43,7 +44,7 @@ Production-grade, framework-agnostic API docs for the Celestial Auth Core (Expre
 ```ts
 /**
  * @openapi
- * /auth/email/register:
+ * /api/v1/auth/email/register:
  *   post:
  *     tags:
  *       - Auth - Email

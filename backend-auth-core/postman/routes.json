@@ -1,0 +1,99 @@
+{
+  "baseUrl": "http://localhost:5001",
+  "baseUrlDescription": "Server origin. Override with PORT env (default 5001) or full API_URL in other environments.",
+  "apiVersion": "v1",
+  "versionedPrefix": "/api/v1",
+  "routes": [
+    {
+      "method": "GET",
+      "path": "/",
+      "fullPath": "/",
+      "versioned": false,
+      "description": "API root"
+    },
+    {
+      "method": "GET",
+      "path": "/health",
+      "fullPath": "/health",
+      "versioned": false,
+      "description": "Simple liveness"
+    },
+    {
+      "method": "GET",
+      "path": "/health/live",
+      "fullPath": "/health/live",
+      "versioned": false,
+      "description": "Liveness with DB check. Query: details=true for pool info"
+    },
+    {
+      "method": "GET",
+      "path": "/health/ready",
+      "fullPath": "/health/ready",
+      "versioned": false,
+      "description": "Readiness with DB check. Query: details=true for pool info"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/email/login",
+      "fullPath": "/api/v1/auth/email/login",
+      "versioned": true,
+      "description": "Email/password login"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/email/logout",
+      "fullPath": "/api/v1/auth/email/logout",
+      "versioned": true,
+      "description": "Logout (clear refresh cookie)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/email/refresh",
+      "fullPath": "/api/v1/auth/email/refresh",
+      "versioned": true,
+      "description": "Refresh access token (uses cookie)"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/email/me",
+      "fullPath": "/api/v1/auth/email/me",
+      "versioned": true,
+      "description": "Get current user (Bearer token required)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/email/otp/send",
+      "fullPath": "/api/v1/auth/email/otp/send",
+      "versioned": true,
+      "description": "Send OTP to email"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/email/otp/verify",
+      "fullPath": "/api/v1/auth/email/otp/verify",
+      "versioned": true,
+      "description": "Verify OTP and login"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/magic-link/send",
+      "fullPath": "/api/v1/auth/magic-link/send",
+      "versioned": true,
+      "description": "Send magic link to email"
+    },
+    {
+      "method": "GET",
+      "path": "/api/v1/auth/magic-link/verify",
+      "fullPath": "/api/v1/auth/magic-link/verify",
+      "versioned": true,
+      "description": "Verify magic link (GET, e.g. browser redirect)"
+    },
+    {
+      "method": "POST",
+      "path": "/api/v1/auth/magic-link/verify",
+      "fullPath": "/api/v1/auth/magic-link/verify",
+      "versioned": true,
+      "description": "Verify magic link (POST, returns JSON)"
+    }
+  ]
+}

@@ -1,34 +1,34 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Celestial Auth Core API",
+    "title": "Celestial Auth API",
     "version": "1.0.0",
-    "description": "B2B SaaS auth API with multi-tenant JWT, email/password, and cookie-based refresh. All authenticated endpoints require `Authorization: Bearer <access_token>`.",
+    "description": "Pluggable auth service powering multi-tenant identity, JWT session management, and tenant-scoped role resolution for the Celestial SaaS platform. Unversioned: GET / (root), GET /health, GET /health/live, GET /health/ready. Versioned API: /api/v1/*. Protected routes require `Authorization: Bearer <access_token>`. Refresh tokens are issued as httpOnly cookies — use `POST /api/v1/auth/email/refresh` to renew sessions silently.",
     "contact": {
-      "name": "API Support"
+      "name": "Debjyoti Mohapatra"
     },
     "license": {
-      "name": "ISC"
+      "name": "MIT"
     }
   },
   "servers": [
     {
-      "url": "http://localhost:3000/api/v1",
-      "description": "Local"
+      "url": "http://localhost:5001",
+      "description": "Local Development"
     },
     {
-      "url": "https://api.example.com/api/v1",
+      "url": "https://api.example.com",
       "description": "Production"
     }
   ],
   "tags": [
     {
       "name": "Health",
-      "description": "Liveness and readiness"
+      "description": "Unversioned health and liveness endpoints"
     },
     {
-      "name": "Auth - Email",
-      "description": "Email/password login, logout, refresh, me"
+      "name": "Auth",
+      "description": "Authentication endpoints (under /api/v1)"
     }
   ],
   "components": {
@@ -43,7 +43,7 @@
         "type": "apiKey",
         "in": "cookie",
         "name": "celestial_refresh_token",
-        "description": "HttpOnly refresh cookie (7d). Used by POST /auth/email/refresh."
+        "description": "HttpOnly refresh cookie (7d). Used by POST /api/v1/auth/email/refresh."
       }
     },
     "schemas": {
@@ -160,17 +160,50 @@
       },
       "HealthResponse": {
         "type": "object",
+        "description": "Simple health response (GET /health)",
         "properties": {
           "status": {
             "type": "string",
             "example": "ok"
           },
-          "uptime": {
-            "type": "number"
+          "service": {
+            "type": "string",
+            "example": "celestial-auth-core"
+          }
+        }
+      },
+      "HealthDetailResponse": {
+        "type": "object",
+        "description": "Detailed health response (GET /health/live, GET /health/ready)",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "example": "ok"
+          },
+          "dialect": {
+            "type": "string",
+            "description": "Database dialect",
+            "example": "postgresql"
+          },
+          "latencyMs": {
+            "type": "number",
+            "description": "DB check latency in ms"
+          },
+          "pool": {
+            "type": "object",
+            "description": "Pool info when details=true"
           },
           "timestamp": {
             "type": "string",
             "format": "date-time"
+          },
+          "error": {
+            "type": "string",
+            "description": "Present when status is degraded"
           }
         }
       },
@@ -207,6 +240,25 @@
           }
         }
       },
+      "RouteNotFoundResponse": {
+        "type": "object",
+        "description": "Returned when the requested path has no handler",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": false
+          },
+          "error": {
+            "type": "string",
+            "example": "ROUTE_NOT_FOUND"
+          },
+          "path": {
+            "type": "string",
+            "description": "Requested path",
+            "example": "/"
+          }
+        }
+      },
       "PaginatedResponse": {
         "type": "object",
         "properties": {
@@ -234,9 +286,9 @@
         "tags": [
           "Health"
         ],
-        "summary": "API root",
+        "summary": "API root (unversioned)",
         "operationId": "getApiRoot",
-        "description": "Returns a simple message indicating the Celestial Auth Core API is available.",
+        "description": "Returns a simple message indicating the Celestial Auth Core API is available. Not under API versioning.",
         "responses": {
           "200": {
             "description": "OK",
@@ -253,6 +305,16 @@
                 }
               }
             }
+          },
+          "404": {
+            "description": "Not Found — route has no handler (e.g. wrong path or method)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RouteNotFoundResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -262,9 +324,9 @@
         "tags": [
           "Health"
         ],
-        "summary": "Health check",
+        "summary": "Health check (unversioned)",
         "operationId": "getHealth",
-        "description": "Liveness/readiness. Returns status, uptime, and timestamp.",
+        "description": "Simple liveness. Returns status and service name. Not under API versioning.",
         "responses": {
           "200": {
             "description": "OK",
@@ -279,7 +341,101 @@
         }
       }
     },
-    "/auth/email/login": {
+    "/health/live": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Liveness (unversioned)",
+        "operationId": "getHealthLive",
+        "description": "Checks database connectivity. Use for k8s liveness probes. Optional query details=true for pool info.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "details",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "1"
+              ]
+            },
+            "description": "Include pool details in response"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service and DB are healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDetailResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "tags": [
+          "Health"
+        ],
+        "summary": "Readiness (unversioned)",
+        "operationId": "getHealthReady",
+        "description": "Checks database connectivity. Use for k8s readiness probes. Optional query details=true for pool info.",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "details",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "1"
+              ]
+            },
+            "description": "Include pool details in response"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Service is ready to accept traffic",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDetailResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Database unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthDetailResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email/login": {
       "post": {
         "tags": [
           "Auth - Email"
@@ -346,7 +502,7 @@
         }
       }
     },
-    "/auth/email/logout": {
+    "/api/v1/auth/email/logout": {
       "post": {
         "tags": [
           "Auth - Email"
@@ -368,7 +524,7 @@
         }
       }
     },
-    "/auth/email/refresh": {
+    "/api/v1/auth/email/refresh": {
       "post": {
         "tags": [
           "Auth - Email"
@@ -438,7 +594,7 @@
         }
       }
     },
-    "/auth/email/me": {
+    "/api/v1/auth/email/me": {
       "get": {
         "tags": [
           "Auth - Email"
@@ -471,6 +627,481 @@
                 },
                 "example": {
                   "error": "Authorization header must be in the format: Bearer <token>"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email/otp/send": {
+      "post": {
+        "tags": [
+          "Auth - Email"
+        ],
+        "summary": "Send OTP code to email",
+        "operationId": "authEmailOtpSend",
+        "description": "Generates and sends an OTP code to the user's email address.\nThe code is hashed and stored. In development, the code is returned in the response for testing.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OTP sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "OTP sent to email"
+                    },
+                    "otp": {
+                      "type": "string",
+                      "description": "Only returned in development mode",
+                      "example": "123456"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Email OTP is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/email/otp/verify": {
+      "post": {
+        "tags": [
+          "Auth - Email"
+        ],
+        "summary": "Verify OTP code and login",
+        "operationId": "authEmailOtpVerify",
+        "description": "Verifies the OTP code sent to the user's email.\nIf valid, returns access token and sets refresh token cookie.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email",
+                  "code"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "OTP code (typically 6 digits)",
+                    "example": "123456"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success - OTP verified and logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "celestial_refresh_token (httpOnly, 7d)",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing email or code",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid, expired, or max attempts exceeded",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                },
+                "examples": {
+                  "invalid": {
+                    "value": {
+                      "error": "Invalid OTP code"
+                    }
+                  },
+                  "expired": {
+                    "value": {
+                      "error": "Invalid or expired OTP code"
+                    }
+                  },
+                  "maxAttempts": {
+                    "value": {
+                      "error": "Maximum attempts exceeded. Please request a new code."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Email OTP is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/magic-link/send": {
+      "post": {
+        "tags": [
+          "Auth - Magic Link"
+        ],
+        "summary": "Send magic link to email",
+        "operationId": "authMagicLinkSend",
+        "description": "Generates a secure magic link token and sends it to the user's email address.\nThe token is hashed and stored. The link expires based on config (default: 20 minutes).\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "email"
+                ],
+                "properties": {
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Magic link sent successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Magic link sent to email"
+                    },
+                    "magicLink": {
+                      "type": "string",
+                      "description": "Only returned in development mode",
+                      "example": "http://localhost:5001/api/v1/auth/magic-link/verify?token=abc123&email=user@example.com"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Magic link disabled or email domain not allowed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/auth/magic-link/verify": {
+      "get": {
+        "tags": [
+          "Auth - Magic Link"
+        ],
+        "summary": "Verify magic link token and login (GET)",
+        "operationId": "authMagicLinkVerifyGet",
+        "description": "Verifies the magic link token from email and logs the user in.\nSupports browser redirects - can redirect to frontend URL with token.\n",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Magic link token from email"
+          },
+          {
+            "in": "query",
+            "name": "email",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "email"
+            },
+            "description": "Email address associated with the magic link"
+          },
+          {
+            "in": "query",
+            "name": "redirect",
+            "required": false,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Optional redirect URL (if provided, redirects instead of returning JSON)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success - logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "celestial_refresh_token (httpOnly, 7d)",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "302": {
+            "description": "Redirect (when redirect query param provided)"
+          },
+          "400": {
+            "description": "Missing token or email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired magic link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Magic link is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Auth - Magic Link"
+        ],
+        "summary": "Verify magic link token and login (POST)",
+        "operationId": "authMagicLinkVerifyPost",
+        "description": "Verifies the magic link token and logs the user in.\nAccepts token and email in request body.\n",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "token",
+                  "email"
+                ],
+                "properties": {
+                  "token": {
+                    "type": "string",
+                    "description": "Magic link token from email"
+                  },
+                  "email": {
+                    "type": "string",
+                    "format": "email",
+                    "description": "Email address associated with the magic link"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Success - logged in",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "description": "celestial_refresh_token (httpOnly, 7d)",
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Missing token or email",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired magic link",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Magic link is disabled",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "User not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
                 }
               }
             }
