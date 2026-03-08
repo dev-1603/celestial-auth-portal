@@ -12,11 +12,12 @@
  * etc.
  */
 import { Router } from 'express'
-import { isMethodEnabled } from '../../config/auth-config.loader'
+import { isMethodEnabled, isMFAEnabled } from '../../config/auth-config.loader'
 import { emailAuthRouter } from './email/routes'
 import { magicLinkRouter } from './magic-link/routes'
 import { phoneAuthRouter } from './phone/routes'
 import { oauthRouter } from './oauth/routes'
+import { mfaRouter } from './mfa/routes'
 
 const router = Router()
 
@@ -38,6 +39,11 @@ if (isMethodEnabled('phone_sms_otp')) {
 // OAuth auth - mount if oauth is enabled
 if (isMethodEnabled('oauth')) {
   router.use('/oauth', oauthRouter)
+}
+
+// MFA - mount if MFA is enabled in config
+if (isMFAEnabled()) {
+  router.use('/mfa', mfaRouter)
 }
 
 export default router

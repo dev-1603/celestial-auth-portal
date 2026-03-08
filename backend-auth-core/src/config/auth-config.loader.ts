@@ -205,6 +205,14 @@ export function getSSOProviderConfig(providerId: string) {
 }
 
 /**
+ * Check if MFA is enabled
+ */
+export function isMFAEnabled(): boolean {
+  const config = getAuthConfig()
+  return config.mfa?.policy !== 'disabled'
+}
+
+/**
  * Clear cached config (useful for testing or hot-reload)
  */
 export function clearAuthConfigCache(): void {

@@ -534,6 +534,251 @@ npm test -- src/modules/auth/oauth/__tests__/callback.handler.test.ts
 - **Redirect Support**: Can redirect to frontend after successful login
 - **Multiple Providers**: Users can link multiple OAuth providers to the same account
 
+## Rate Limiting
+
+### Overview
+
+Rate limiting protects the authentication system from abuse, brute force attacks, and resource exhaustion. All rate limits are configurable via `auth.json`.
+
+### Configuration
+
+Rate limits are configured in `auth.json`:
+
+```json
+{
+  "rateLimits": {
+    "loginAttempts": 5,
+    "windowMinutesLogin": 15,
+    "resetRequests": 3,
+    "windowMinutesReset": 60,
+    "otpRequests": 5,
+    "windowMinutesOtp": 15,
+    "perIp": 50,
+    "perUser": 20
+  }
+}
+```
+
+### Applied Endpoints
+
+- **Login**: `loginAttempts` per `windowMinutesLogin` (per email + IP)
+- **OTP Send**: `otpRequests` per `windowMinutesOtp` (per email/phone + IP)
+- **Password Reset**: `resetRequests` per `windowMinutesReset` (per email + IP)
+- **Magic Link**: Uses `otpRequests` config (per email + IP)
+- **OAuth Initiate**: Uses `perIp` config (per IP + provider)
+
+### Implementation
+
+Rate limiting is implemented using `express-rate-limit` middleware:
+
+```typescript
+import { createLoginRateLimiter } from '../../../middleware/rateLimit'
+
+emailAuthRouter.post('/login', createLoginRateLimiter(), loginWithEmailPassword)
+```
+
+### Rate Limit Responses
+
+When rate limit is exceeded, the API returns:
+- **Status**: `429 Too Many Requests`
+- **Body**: `{ error: "Too many requests...", retryAfter: 15 }`
+- **Headers**: `RateLimit-*` headers with limit info
+
+### Testing
+
+Rate limits can be tested by making multiple requests quickly:
+
+```bash
+# Test login rate limit (5 attempts per 15 minutes)
+for i in {1..6}; do
+  curl -X POST http://localhost:5001/api/v1/auth/email/login \
+    -H "Content-Type: application/json" \
+    -d '{"email":"user@example.com","password":"wrong"}'
+done
+# 6th request should return 429
+```
+
+## Account Recovery
+
+### Overview
+
+Account recovery allows users to reset their passwords via email. The system generates a secure token, sends it via email, and allows the user to set a new password.
+
+### Flow
+
+1. **Request Reset**: User requests password reset → Generate token → Store in `PasswordReset` table → Send email
+2. **Complete Reset**: User clicks link → Verify token → Validate password → Update password → Mark token as used
+
+### Endpoints
+
+- `POST /api/v1/auth/email/password-reset/request` - Request password reset
+- `POST /api/v1/auth/email/password-reset/verify` - Complete password reset (also supports GET for email links)
+
+### Config
+
+No specific config required. Uses email service configuration.
+
+### Environment Variables
+
+Uses existing email service configuration (see `docs/EMAIL_SERVICE.md`).
+
+### Testing
+
+**Unit tests:**
+```bash
+npm test -- src/modules/auth/email/__tests__/password-reset-*.test.ts
+```
+
+**Postman:**
+- Use "Password Reset" folder in the collection
+- Request reset → Check email → Complete reset
+
+### Implementation Files
+
+- Handlers: `src/modules/auth/email/password-reset-request.handler.ts`, `password-reset-complete.handler.ts`
+- Repository: `src/repositories/password-reset.repository.ts`
+- Routes: Added to `src/modules/auth/email/routes.ts`
+- Tests: `src/modules/auth/email/__tests__/password-reset-*.test.ts`
+- Swagger: `src/docs/paths.auth.email.ts`
+
+### Notes
+
+- **Security**: Always returns success even if user doesn't exist (prevents email enumeration)
+- **Token Expiry**: Reset tokens expire in 1 hour
+- **One-Time Use**: Tokens are marked as used after successful reset
+- **Cleanup**: All reset tokens for a user are deleted after successful reset
+- **Password Policy**: New password must meet policy requirements from `auth.json`
+
+## Multi-Factor Authentication (MFA)
+
+### Overview
+
+MFA adds an extra layer of security by requiring a second authentication factor (TOTP code from authenticator app) in addition to the primary method (password, OAuth, etc.).
+
+### Flow
+
+1. **Enable MFA**: User requests MFA setup → Generate TOTP secret → Generate QR code → Store secret (unverified)
+2. **Verify Setup**: User scans QR code → Enters TOTP code → Verify code → Mark MFA as enabled
+3. **Login with MFA**: User logs in normally → If MFA enabled, require TOTP code → Verify code → Issue tokens
+4. **Disable MFA**: User provides password → Remove MFA data
+
+### Endpoints
+
+- `POST /api/v1/auth/mfa/enable` - Generate TOTP secret and QR code (requires auth)
+- `POST /api/v1/auth/mfa/verify-setup` - Verify TOTP code during setup (requires auth)
+- `POST /api/v1/auth/mfa/verify` - Verify MFA code during login (no auth required)
+- `POST /api/v1/auth/mfa/disable` - Disable MFA (requires auth + password)
+
+### Config
+
+MFA is configured in `auth.json`:
+
+```json
+{
+  "mfa": {
+    "required": false,
+    "policy": "optional",  // "required" | "optional" | "disabled"
+    "methods": ["totp", "sms"]
+  }
+}
+```
+
+### Environment Variables
+
+No additional environment variables required. Uses existing email/SMS service configuration.
+
+### Testing
+
+**Unit tests:**
+```bash
+npm test -- src/modules/auth/mfa/__tests__/*.test.ts
+```
+
+**Manual testing:**
+1. Enable MFA → Scan QR code with authenticator app (Google Authenticator, Authy, etc.)
+2. Verify setup → Enter TOTP code
+3. Login → After password, enter TOTP code
+4. Disable MFA → Provide password
+
+### Implementation Files
+
+- Service: `src/services/mfa.service.ts` (TOTP generation, verification, QR codes)
+- Handlers: `src/modules/auth/mfa/enable.handler.ts`, `verify-setup.handler.ts`, `verify.handler.ts`, `disable.handler.ts`
+- Routes: `src/modules/auth/mfa/routes.ts`
+- Tests: `src/modules/auth/mfa/__tests__/*.test.ts`
+- Swagger: `src/docs/paths.auth.mfa.ts`
+
+### Notes
+
+- **TOTP Secret Storage**: Stored in `AuthIdentity.metadata.totpSecret` (base32 encoded)
+- **Backup Codes**: 8 backup codes generated during setup (stored in metadata)
+- **QR Code**: Generated as data URL (base64 PNG image)
+- **Time Window**: TOTP codes valid for 2 time steps (60 seconds tolerance)
+- **SMS MFA**: Can reuse existing phone OTP infrastructure
+- **MFA Required**: If `mfa.required: true`, all users must enable MFA
+
+## Session Management Enhancements
+
+### Overview
+
+Session management has been enhanced to be fully config-driven, supporting custom cookie settings, remember me functionality, and configurable session durations.
+
+### Configuration
+
+Session settings are configured in `auth.json`:
+
+```json
+{
+  "session": {
+    "maxAgeDays": 7,
+    "idleTimeoutMinutes": 30,
+    "sameSite": "strict",  // "strict" | "lax" | "none"
+    "secure": true,
+    "cookieDomain": ".celestial.com",
+    "refreshTokenRotation": false,
+    "rememberMeMaxAgeDays": 30
+  }
+}
+```
+
+### Features
+
+- **Config-Driven Cookies**: Cookie settings read from `auth.json`
+- **Remember Me**: Extended session duration for "remember me" logins
+- **SameSite**: Configurable SameSite cookie attribute
+- **Secure**: Configurable secure flag (HTTPS only)
+- **Cookie Domain**: Support for cross-subdomain cookies
+
+### Implementation
+
+Cookie settings are applied in `src/lib/cookie.ts`:
+
+```typescript
+export const buildRefreshCookie = (
+  token: string,
+  opts: RefreshCookieOptions = {},
+): CookieDescriptor => {
+  const sessionConfig = getSessionConfig()
+  // Uses config values for secure, sameSite, domain, maxAge
+}
+```
+
+### Usage
+
+```typescript
+// Regular login (uses maxAgeDays from config)
+const { refreshCookie } = buildLoginTokens(payload)
+
+// Remember me login (uses rememberMeMaxAgeDays from config)
+const { refreshCookie } = buildLoginTokens(payload, { rememberMe: true })
+```
+
+### Notes
+
+- **Default Values**: Sensible defaults if config is missing
+- **Environment Override**: `NODE_ENV=production` sets `secure: true` by default
+- **Token Rotation**: `refreshTokenRotation` not yet implemented (planned for Phase 2)
+
 ## Database Migrations
 
 ### Running Migrations

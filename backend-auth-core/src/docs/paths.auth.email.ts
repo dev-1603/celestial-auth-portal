@@ -396,4 +396,135 @@ const otpSend = true
  */
 const otpVerify = true
 
-export { root, health, healthLive, healthReady, login, logout, refresh, me, otpSend, otpVerify }
+/**
+ * @openapi
+ * /api/v1/auth/email/password-reset/request:
+ *   post:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Request password reset
+ *     operationId: authEmailPasswordResetRequest
+ *     description: |
+ *       Generates a password reset token and sends it to the user's email address.
+ *       The token is stored in PasswordReset table and expires in 1 hour.
+ *       For security, always returns success even if user doesn't exist (prevents email enumeration).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       '200':
+ *         description: Success (always returns this, even if user doesn't exist)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "If an account with that email exists, a password reset link has been sent."
+ *       '400':
+ *         description: Missing email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '429':
+ *         description: Too many requests (rate limited)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+const passwordResetRequest = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/password-reset/verify:
+ *   post:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Complete password reset
+ *     operationId: authEmailPasswordResetVerify
+ *     description: |
+ *       Verifies the password reset token and updates the user's password.
+ *       Also supports GET method for browser redirects from email links.
+ *       Token must be valid and not expired. After successful reset, all reset tokens for the user are deleted.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, email, password]
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Password reset token from email
+ *                 example: "abc123def456..."
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 description: New password (must meet password policy requirements)
+ *                 minLength: 8
+ *                 example: "NewSecurePassword123!"
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         schema:
+ *           type: string
+ *         description: Password reset token (for GET requests)
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *           format: email
+ *         description: User email (for GET requests)
+ *     responses:
+ *       '200':
+ *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Password has been reset successfully"
+ *       '400':
+ *         description: Missing fields or password doesn't meet policy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               missingFields:
+ *                 value: { error: "Reset token, email, and new password are required" }
+ *               passwordPolicy:
+ *                 value: { error: "Password must be at least 8 characters long" }
+ *       '401':
+ *         description: Invalid, expired, or used token, or email mismatch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               invalidToken:
+ *                 value: { error: "Invalid or expired password reset token" }
+ *               emailMismatch:
+ *                 value: { error: "Email does not match reset token" }
+ */
+const passwordResetVerify = true
+
+export { root, health, healthLive, healthReady, login, logout, refresh, me, otpSend, otpVerify, passwordResetRequest, passwordResetVerify }

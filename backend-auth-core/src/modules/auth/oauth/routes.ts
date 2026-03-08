@@ -10,12 +10,13 @@
 import { Router } from 'express'
 import { initiateOAuth, getOAuthProviders } from './initiate.handler'
 import { handleOAuthCallback } from './callback.handler'
+import { createOAuthRateLimiter } from '../../../middleware/rateLimit'
 
 export const oauthRouter = Router()
 
 // Get enabled OAuth providers
 oauthRouter.get('/providers', getOAuthProviders)
 
-// OAuth flow
-oauthRouter.get('/:provider/initiate', initiateOAuth)
+// OAuth flow (with rate limiting to prevent callback flooding)
+oauthRouter.get('/:provider/initiate', createOAuthRateLimiter(), initiateOAuth)
 oauthRouter.get('/:provider/callback', handleOAuthCallback)

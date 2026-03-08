@@ -61,6 +61,19 @@ export const findGlobalUserById = async (
     })
 }
 
+/**
+ * Update user password hash
+ */
+export const updateUserPassword = async (
+    userId: string,
+    passwordHash: string,
+): Promise<GlobalUser> => {
+    return prisma.globalUser.update({
+        where: { id: userId },
+        data: { passwordHash },
+    })
+}
+
 export interface TenantUserLinkInfo {
     tenantId: string
     tenantSlug?: string

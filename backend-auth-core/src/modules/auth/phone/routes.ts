@@ -9,9 +9,10 @@
 import { Router } from 'express'
 import { sendPhoneOTP } from './otp-send.handler'
 import { verifyPhoneOTP } from './otp-verify.handler'
+import { createOTPSendRateLimiter } from '../../../middleware/rateLimit'
 
 export const phoneAuthRouter = Router()
 
-// Phone OTP
-phoneAuthRouter.post('/otp/send', sendPhoneOTP)
+// Phone OTP (with rate limiting on send to prevent SMS cost abuse)
+phoneAuthRouter.post('/otp/send', createOTPSendRateLimiter(), sendPhoneOTP)
 phoneAuthRouter.post('/otp/verify', verifyPhoneOTP)
