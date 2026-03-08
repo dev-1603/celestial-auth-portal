@@ -28,16 +28,11 @@ This automatically loads `.env.local` before running Prisma.
 
 ## Your DIRECT_URL Issue
 
-Looking at your `.env.local`:
-```env
-DIRECT_URL="postgresql://postgres.irdzxxsvsyrlhqysewuc:supabase@2026@aws-1-ap-southeast-1.pooler.supabase.com:5432/postgres"
-```
-
 **Issue:** You're using the pooler hostname (`pooler.supabase.com`) with port 5432. For Supabase direct connections, you need the **direct connection hostname**.
 
-**Fix:** Change to:
+**Fix:** Change to use the direct connection hostname:
 ```env
-DIRECT_URL="postgresql://postgres.irdzxxsvsyrlhqysewuc:supabase@2026@db.irdzxxsvsyrlhqysewuc.supabase.co:5432/postgres"
+DIRECT_URL="postgresql://postgres.[PROJECT_REF]:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres"
 ```
 
 **Difference:**
@@ -47,7 +42,9 @@ DIRECT_URL="postgresql://postgres.irdzxxsvsyrlhqysewuc:supabase@2026@db.irdzxxsv
 ## Quick Fix Steps
 
 1. **Update DIRECT_URL in .env.local:**
-   - Change hostname from `pooler.supabase.com` to `db.irdzxxsvsyrlhqysewuc.supabase.co`
+   - Change hostname from `pooler.supabase.com` to `db.[PROJECT_REF].supabase.co`
+   - Replace `[PROJECT_REF]` with your Supabase project reference
+   - Replace `[PASSWORD]` with your database password
    - Keep port as `5432`
 
 2. **Run migration:**
@@ -65,7 +62,12 @@ DIRECT_URL="postgresql://postgres.irdzxxsvsyrlhqysewuc:supabase@2026@db.irdzxxsv
 3. Look for "Connection string" → "Direct connection" (not "Connection pooling")
 4. Copy that URL for `DIRECT_URL`
 
-Format: `postgresql://postgres.[ref]:[password]@db.[ref].supabase.co:5432/postgres`
+Format: `postgresql://postgres.[PROJECT_REF]:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres`
+
+**Example (DO NOT use actual credentials):**
+```env
+DIRECT_URL="postgresql://postgres.abc123xyz:your_password_here@db.abc123xyz.supabase.co:5432/postgres"
+```
 
 ## Verification
 
