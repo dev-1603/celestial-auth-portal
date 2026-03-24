@@ -215,6 +215,105 @@ export function createOAuthRateLimiter() {
 }
 
 /**
+ * Create a rate limiter for registration attempts
+ * Uses: resetRequests config (conservative: 3 per 60 minutes per IP+email)
+ */
+export function createRegistrationRateLimiter() {
+  const limits = getRateLimitConfig()
+  const max = limits.resetRequests || 3
+  const windowMs = (limits.windowMinutesReset || 60) * 60 * 1000
+
+  return rateLimit({
+    windowMs,
+    max,
+    message: {
+      error: 'Too many registration attempts. Please try again later.',
+      retryAfter: Math.ceil(windowMs / 1000 / 60),
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req: Request) => {
+      const email = req.body?.email || ''
+      const ip = ipKeyGenerator(req.ip || 'unknown', 56)
+      return `${ip}:register:${email}`
+    },
+    skip: (req: Request) => {
+      return !req.body?.email
+    },
+  })
+}
+
+/**
+ * Create a rate limiter for SSO initiation
+ * Same shape as OAuth rate limiter
+ */
+export function createSSOInitiateRateLimiter() {
+  const limits = getRateLimitConfig()
+  const max = limits.perIp || 50
+  const windowMs = 15 * 60 * 1000
+
+  return rateLimit({
+    windowMs,
+    max,
+    message: {
+      error: 'Too many SSO requests. Please try again later.',
+      retryAfter: Math.ceil(windowMs / 1000 / 60),
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req: Request) => {
+      const provider = req.params?.provider || ''
+      const ip = ipKeyGenerator(req.ip || 'unknown', 56)
+      return `${ip}:sso:${provider}`
+    },
+  })
+}
+
+/**
+ * Create a rate limiter for QR code generation
+ * IP-based, 10 requests per 15 minutes
+ */
+export function createQRGenerateRateLimiter() {
+  const windowMs = 15 * 60 * 1000
+
+  return rateLimit({
+    windowMs,
+    max: 10,
+    message: {
+      error: 'Too many QR code requests. Please try again later.',
+      retryAfter: Math.ceil(windowMs / 1000 / 60),
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req: Request) => {
+      return `qr:${ipKeyGenerator(req.ip || 'unknown', 56)}`
+    },
+  })
+}
+
+/**
+ * Create a rate limiter for Passkey/WebAuthn operations
+ * IP-based, 20 requests per 15 minutes
+ */
+export function createPasskeyRateLimiter() {
+  const windowMs = 15 * 60 * 1000
+
+  return rateLimit({
+    windowMs,
+    max: 20,
+    message: {
+      error: 'Too many passkey requests. Please try again later.',
+      retryAfter: Math.ceil(windowMs / 1000 / 60),
+    },
+    standardHeaders: true,
+    legacyHeaders: false,
+    keyGenerator: (req: Request) => {
+      return `passkey:${ipKeyGenerator(req.ip || 'unknown', 56)}`
+    },
+  })
+}
+
+/**
  * Create a rate limiter for magic link send requests
  * Uses same config as OTP send
  */

@@ -6,6 +6,7 @@
  */
 import express, { type Application, type Request, type Response } from 'express'
 import authRouter from './modules/auth/routes'
+import { adminRouter } from './modules/admin/routes'
 import healthRouter from './routes/health'
 
 /** API version prefix — only applied to /api/v1/* routes */
@@ -16,6 +17,9 @@ const apiRouter = express.Router()
 
 // Module: auth → prefix /auth → /api/v1/auth/*
 apiRouter.use('/auth', authRouter)
+
+// Module: admin → prefix /admin → /api/v1/admin/*
+apiRouter.use('/admin', adminRouter)
 
 /**
  * Register all routes on the app. Call this from app.ts only.

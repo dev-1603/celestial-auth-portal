@@ -20,13 +20,15 @@ model GlobalUser {
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
-  memberships   TenantUserLink[]
-  refreshTokens RefreshToken[]
-  sessions      Session[]
-  appAccess     AppAccess[]
-  passwordResets PasswordReset[]
-  invitations   Invitation[]   @relation("InvitedUser")
-  authIdentities AuthIdentity[]
+  memberships         TenantUserLink[]
+  refreshTokens       RefreshToken[]
+  sessions            Session[]
+  appAccess           AppAccess[]
+  passwordResets      PasswordReset[]
+  invitations         Invitation[]         @relation("InvitedUser")
+  authIdentities      AuthIdentity[]
+  qrLoginSessions     QrLoginSession[]
+  webAuthnCredentials WebAuthnCredential[]
 }
 
 model Tenant {
@@ -37,10 +39,11 @@ model Tenant {
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
 
-  memberships TenantUserLink[]
-  modules     TenantModule[]
-  invitations Invitation[]
-  clientApps  ClientApp[]
+  memberships    TenantUserLink[]
+  modules        TenantModule[]
+  invitations    Invitation[]
+  clientApps     ClientApp[]
+  accessRequests AccessRequest[]
 }
 
 model TenantUserLink {
@@ -174,6 +177,30 @@ model PasswordReset {
 }
 
 // ─────────────────────────────────────────
+// ACCESS REQUESTS (Waiting List)
+// ─────────────────────────────────────────
+
+model AccessRequest {
+  id         String   @id @default(cuid())
+  email      String
+  name       String?
+  reason     String?
+  tenantId   String   // which tenant the user is requesting access to
+  status     String   @default("pending") // pending | approved | rejected
+  reviewedBy String?  // userId of the admin who reviewed
+  reviewedAt DateTime?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  tenant     Tenant   @relation(fields: [tenantId], references: [id])
+
+  @@unique([email, tenantId, status]) // one pending request per email per tenant
+  @@index([tenantId, status])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// ─────────────────────────────────────────
 // INVITATIONS
 // ─────────────────────────────────────────
 
@@ -246,12 +273,14 @@ model AuthCode {
 // ─────────────────────────────────────────
 
 enum AuthMethodType {
-  PASSWORD   // email/password, passkey
+  PASSWORD   // email/password
   OAUTH      // google, github, etc.
   SSO        // enterprise SSO (SAML, OIDC)
   MAGIC_LINK // email magic link
   OTP        // email OTP, SMS OTP
   PHONE      // phone number auth
+  QR_LOGIN   // QR code-based login
+  PASSKEY    // WebAuthn/FIDO2 passkey
 }
 
 model AuthIdentity {
@@ -287,4 +316,46 @@ model VerificationCode {
 
   @@index([channel, target, purpose])
   @@index([expiresAt])
+}
+
+// ─────────────────────────────────────────
+// QR LOGIN SESSIONS
+// ─────────────────────────────────────────
+
+model QrLoginSession {
+  id           String      @id @default(cuid())
+  sessionToken String      @unique
+  status       String      @default("pending") // pending | scanned | confirmed | expired
+  userId       String?     // set when an authenticated user confirms the QR login
+  qrData       String?     // payload encoded in the QR code (URL or token)
+  expiresAt    DateTime
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+
+  user         GlobalUser? @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([sessionToken])
+  @@index([expiresAt])
+}
+
+// ─────────────────────────────────────────
+// WEBAUTHN / PASSKEY CREDENTIALS
+// ─────────────────────────────────────────
+
+model WebAuthnCredential {
+  id           String     @id @default(cuid())
+  userId       String
+  credentialId String     @unique   // base64url-encoded credential ID from authenticator
+  publicKey    Bytes                // COSE public key bytes
+  counter      BigInt     @default(0) // signature counter for clone detection
+  transports   String[]   @default([]) // e.g. ["usb", "ble", "nfc", "internal"]
+  deviceType   String?    // "singleDevice" | "multiDevice"
+  backedUp     Boolean    @default(false)
+  friendlyName String?    // user-assigned label for the credential
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user         GlobalUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

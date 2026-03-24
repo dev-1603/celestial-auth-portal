@@ -334,6 +334,57 @@ export function isMFAEnabled(): boolean {
 }
 
 /**
+ * Check if SSO is enabled
+ */
+export function isSSOEnabled(): boolean {
+  return isMethodEnabledToMount('sso')
+}
+
+/**
+ * Check if QR Login is enabled
+ */
+export function isQRLoginEnabled(): boolean {
+  return isMethodEnabledToMount('qr_login')
+}
+
+/**
+ * Get QR Login config
+ */
+export function getQRLoginConfig() {
+  return getMethodConfig('qr_login')
+}
+
+/**
+ * Check if Passkey/WebAuthn is enabled
+ */
+export function isPasskeyEnabled(): boolean {
+  return isMethodEnabledToMount('passkey')
+}
+
+/**
+ * Get Passkey config
+ */
+export function getPasskeyConfig() {
+  return getMethodConfig('passkey')
+}
+
+/**
+ * Get signup mode
+ */
+export function getSignupMode(): 'invite_only' | 'open' | 'closed' {
+  const config = getAuthConfig()
+  return config.signupMode || 'open'
+}
+
+/**
+ * Get password policy
+ */
+export function getPasswordPolicy() {
+  const config = getAuthConfig()
+  return config.passwordPolicy || {}
+}
+
+/**
  * Clear cached config (useful for testing or hot-reload)
  */
 export function clearAuthConfigCache(): void {
