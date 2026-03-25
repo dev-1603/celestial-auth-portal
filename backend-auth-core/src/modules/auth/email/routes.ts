@@ -19,8 +19,10 @@ import { getMe } from './me.handler';
 import { refreshToken } from './refresh.handler';
 import { requestPasswordReset } from './password-reset-request.handler';
 import { completePasswordReset } from './password-reset-complete.handler';
+import { registerWithEmail } from './register.handler';
+import { requestAccess } from './request-access.handler';
 import { authenticate } from '../../../middleware/authenticate';
-import { createLoginRateLimiter, createOTPSendRateLimiter, createPasswordResetRateLimiter, createIPRateLimiter } from '../../../middleware/rateLimit';
+import { createLoginRateLimiter, createOTPSendRateLimiter, createPasswordResetRateLimiter, createIPRateLimiter, createRegistrationRateLimiter } from '../../../middleware/rateLimit';
 
 export const emailAuthRouter = Router();
 
@@ -40,3 +42,9 @@ emailAuthRouter.get('/password-reset/verify', completePasswordReset); // Support
 emailAuthRouter.post('/logout', createIPRateLimiter(), logout);
 emailAuthRouter.post('/refresh', createIPRateLimiter(), refreshToken);
 emailAuthRouter.get('/me', authenticate, getMe);
+
+// Email registration (with rate limiting)
+emailAuthRouter.post('/register', createRegistrationRateLimiter(), registerWithEmail);
+
+// Request access / waiting list (with rate limiting)
+emailAuthRouter.post('/request-access', createRegistrationRateLimiter(), requestAccess);

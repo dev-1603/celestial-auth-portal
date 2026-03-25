@@ -12,12 +12,15 @@
  * etc.
  */
 import { Router } from 'express'
-import { isMethodEnabledToMount, isMFAEnabled } from '../../config/auth-config.loader'
+import { isMethodEnabledToMount, isMFAEnabled, isSSOEnabled, isQRLoginEnabled, isPasskeyEnabled } from '../../config/auth-config.loader'
 import { createIPRateLimiter } from '../../middleware/rateLimit'
 import { emailAuthRouter } from './email/routes'
 import { magicLinkRouter } from './magic-link/routes'
 import { phoneAuthRouter } from './phone/routes'
 import { oauthRouter } from './oauth/routes'
+import { ssoRouter } from './sso/routes'
+import { qrRouter } from './qr/routes'
+import { passkeyRouter } from './passkey/routes'
 import { mfaRouter } from './mfa/routes'
 
 const router = Router()
@@ -43,6 +46,21 @@ if (isMethodEnabledToMount('phone_sms_otp')) {
 // OAuth auth - mount if oauth is enabled (checks both enabledMethods and methodsConfig)
 if (isMethodEnabledToMount('oauth')) {
   router.use('/oauth', oauthRouter)
+}
+
+// SSO auth - mount if sso is enabled (checks both enabledMethods and methodsConfig)
+if (isSSOEnabled()) {
+  router.use('/sso', ssoRouter)
+}
+
+// QR Login - mount if qr_login is enabled
+if (isQRLoginEnabled()) {
+  router.use('/qr', qrRouter)
+}
+
+// Passkey/WebAuthn - mount if passkey is enabled
+if (isPasskeyEnabled()) {
+  router.use('/passkey', passkeyRouter)
 }
 
 // MFA - mount if MFA is enabled in config

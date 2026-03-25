@@ -58,6 +58,34 @@ const rawEnv = {
     BCRYPT_ROUNDS: process.env.BCRYPT_ROUNDS || '10',
     AUTH_CODE_EXPIRY_MINS: process.env.AUTH_CODE_EXPIRY_MINS || '5',
     CLIENT_SECRET_SALT_ROUNDS: process.env.CLIENT_SECRET_SALT_ROUNDS || '10',
+
+    // SSO / SAML
+    SAML_SP_ENTITY_ID: process.env.SAML_SP_ENTITY_ID || '',
+    SAML_SP_ACS_URL: process.env.SAML_SP_ACS_URL || '',
+    SAML_IDP_SSO_URL: process.env.SAML_IDP_SSO_URL || '',
+    SAML_IDP_CERT: process.env.SAML_IDP_CERT || '',
+    SAML_SP_PRIVATE_KEY: process.env.SAML_SP_PRIVATE_KEY || '',
+    SAML_SP_CERT: process.env.SAML_SP_CERT || '',
+
+    // SSO / OIDC (generic)
+    SSO_OIDC_ISSUER: process.env.SSO_OIDC_ISSUER || '',
+    SSO_OIDC_CLIENT_ID: process.env.SSO_OIDC_CLIENT_ID || '',
+    SSO_OIDC_CLIENT_SECRET: process.env.SSO_OIDC_CLIENT_SECRET || '',
+
+    // SSO / Okta
+    SSO_OKTA_DOMAIN: process.env.SSO_OKTA_DOMAIN || '',
+    SSO_OKTA_CLIENT_ID: process.env.SSO_OKTA_CLIENT_ID || '',
+    SSO_OKTA_CLIENT_SECRET: process.env.SSO_OKTA_CLIENT_SECRET || '',
+
+    // SSO / Auth0
+    SSO_AUTH0_DOMAIN: process.env.SSO_AUTH0_DOMAIN || '',
+    SSO_AUTH0_CLIENT_ID: process.env.SSO_AUTH0_CLIENT_ID || '',
+    SSO_AUTH0_CLIENT_SECRET: process.env.SSO_AUTH0_CLIENT_SECRET || '',
+
+    // WebAuthn / Passkey
+    WEBAUTHN_RP_NAME: process.env.WEBAUTHN_RP_NAME || 'Celestial Auth',
+    WEBAUTHN_RP_ID: process.env.WEBAUTHN_RP_ID || 'localhost',
+    WEBAUTHN_ORIGIN: process.env.WEBAUTHN_ORIGIN || 'http://localhost:3000',
 } as const
 
 const assertNonEmpty = (value: string, key: string): void => {
