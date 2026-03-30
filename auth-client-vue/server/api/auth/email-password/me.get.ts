@@ -1,8 +1,9 @@
 /**
- * BFF: Get current user (me). Forwards Authorization Bearer to auth-core.
+ * BFF: Get current user (me). Authorization from BFF session only (no client Bearer).
  */
 
 import { getPath } from "~/config/apiRoutes";
+import { buildBackendHeaders } from "../../../utils/requestHeaders";
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -13,13 +14,11 @@ export default defineEventHandler(async (event) => {
   const versionedPrefix = "/api/v1";
   const url = `${baseUrl}${versionedPrefix}/${path}`;
 
-  const authHeader = getHeader(event, "authorization");
+  const headers = await buildBackendHeaders(event, { authenticated: true });
 
   const response = await fetch(url, {
     method: "GET",
-    headers: {
-      ...(authHeader ? { authorization: authHeader } : {}),
-    },
+    headers,
   });
 
   const data = await response.json().catch(() => ({}));

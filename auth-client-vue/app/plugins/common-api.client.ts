@@ -1,6 +1,7 @@
 /**
- * Initializes the common API instance with auth getToken and refresh.
+ * Initializes the common API instance with refresh and security context.
  * Client-only (.client.ts) so it runs only in the browser – avoids SSR and keeps hydration in sync.
+ * Access tokens live in the BFF session (HttpOnly cookie + server store); no Bearer from the client.
  */
 
 import { initCommonApi } from "~/lib/commonApi";
@@ -8,15 +9,14 @@ import { useAuthStore } from "~/stores/authStore";
 import { useAuth } from "~/composables/useAuth";
 
 export default defineNuxtPlugin(() => {
-  const { accessToken, user } = useAuthStore();
+  const authStore = useAuthStore();
   const { refresh } = useAuth();
 
   initCommonApi({
-    getToken: () => accessToken.value,
     refresh,
     getContext: () => ({
-      userId: user.value?.id,
-      tenantId: user.value?.tenantId,
+      userId: authStore.user?.id,
+      tenantId: authStore.user?.tenantId,
     }),
   });
 });

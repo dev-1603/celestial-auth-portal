@@ -3,6 +3,7 @@
  */
 
 import { getPath } from "~/config/apiRoutes";
+import { clearBffSession } from "../../../utils/bffSession";
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -35,6 +36,8 @@ export default defineEventHandler(async (event) => {
     const message = (data && typeof data.error === "string") ? data.error : "Logout failed";
     throw createError({ statusCode: response.status, statusMessage: message });
   }
+
+  await clearBffSession(event);
 
   return data ?? {};
 });

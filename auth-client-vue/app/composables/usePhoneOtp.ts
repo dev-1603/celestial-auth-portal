@@ -1,5 +1,5 @@
 /**
- * Phone SMS OTP composable – sendSmsOtp, verifySmsOtp; only when methodsConfig.phone_sms_otp.enabled.
+ * Phone OTP composable – sendSmsOtp, verifySmsOtp.
  */
 
 import { authConfig } from "../config/authConfig";
@@ -10,7 +10,7 @@ export function usePhoneOtp() {
   const { setAuth } = useAuthStore();
 
   const isPhoneOtpEnabled = computed(
-    () => authConfig.methodsConfig?.phone_sms_otp?.enabled === true
+    () => authConfig.methodsConfig?.phone_sms_otp?.enabled === true,
   );
 
   const digits = computed(() => authConfig.methodsConfig?.phone_sms_otp?.digits ?? 6);
@@ -39,7 +39,7 @@ export function usePhoneOtp() {
     try {
       const result = await serviceVerify(payload);
       if (result) {
-        setAuth(result.accessToken, result.user);
+        setAuth(result.user);
         const redirectTo = authConfig.redirects?.afterLogin ?? "/app";
         await router.push(redirectTo);
       } else {
@@ -62,3 +62,4 @@ export function usePhoneOtp() {
     error,
   };
 }
+

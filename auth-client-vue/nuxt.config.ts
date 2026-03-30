@@ -20,6 +20,10 @@ export default defineNuxtConfig({
       '~/config': join(_dirname, 'app/config'),
       '~/schema': join(_dirname, 'schema'),
     },
+    storage: {
+      /** Access-token session backing store; use driver `redis` in multi-instance deploys. */
+      bffSessions: { driver: 'memory' },
+    },
   },
 
   runtimeConfig: {

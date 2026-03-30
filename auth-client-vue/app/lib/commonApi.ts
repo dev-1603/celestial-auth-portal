@@ -1,38 +1,25 @@
 /**
  * Common API instance – single place for all BFF/API requests.
- * When auth=true, adds Bearer token from getToken(); on 401 tries refresh once and retries.
- * Initialize from a plugin with initCommonApi({ getToken, setToken, refresh }).
+ * Authenticated calls use credentials (BFF session cookie); access JWT is never held in the client.
+ * On 401 tries refresh once and retries.
  */
 
-import { getAuthRequestOptions } from "./authRequestProvider";
 import { getSecurityHeaders } from "./securityHeaders";
 
 export type CommonApiOptions = {
-  getToken?: () => string | null;
-  setToken?: (token: string, user: { id: string; email: string; tenantId?: string; tenantSlug?: string; role?: string }) => void;
-  resetToken?: () => void;
   refresh?: () => Promise<boolean>;
   getContext?: () => { tenantId?: string; userId?: string };
 };
 
-let getToken: (() => string | null) | undefined;
 let refreshFn: (() => Promise<boolean>) | undefined;
 let getContext: (() => { tenantId?: string; userId?: string }) | undefined;
 
 export function initCommonApi(options: CommonApiOptions) {
-  getToken = options.getToken;
   refreshFn = options.refresh;
   getContext = options.getContext;
-  if (options.setToken) {
-    // Optional: store setToken for use after refresh if needed
-  }
-  if (options.resetToken) {
-    // Optional: call on logout
-  }
 }
 
 export function resetToken() {
-  getToken = undefined;
   refreshFn = undefined;
   getContext = undefined;
 }
@@ -63,10 +50,8 @@ function buildUrl(url: string, queryParams?: Record<string, string | number | bo
 }
 
 function mergeAuthHeaders(headers: Record<string, string> = {}): Record<string, string> {
-  const token = getToken?.() ?? null;
-  const authOpts = getAuthRequestOptions(() => token);
   const securityHeaders = getSecurityHeaders(getContext?.());
-  return { ...securityHeaders, ...headers, ...authOpts.headers };
+  return { ...securityHeaders, ...headers };
 }
 
 async function handleResponseError<T>(err: unknown, retry: () => Promise<T>): Promise<T> {
@@ -79,11 +64,11 @@ async function handleResponseError<T>(err: unknown, retry: () => Promise<T>): Pr
 }
 
 /**
- * GET request. When auth=true, adds Authorization Bearer; on 401 tries refresh and retries once.
+ * GET request. When auth=true, sends same-origin credentials (BFF session cookie); on 401 tries refresh once.
  */
 export async function fetchGetRequest<T = unknown>(
   url: string,
-  options: FetchGetRequestOptions = {}
+  options: FetchGetRequestOptions = {},
 ): Promise<T> {
   const { headers = {}, auth = false, queryParams, credentials: creds } = options;
   const mergedHeaders = auth ? mergeAuthHeaders(headers) : headers;
@@ -105,11 +90,11 @@ export async function fetchGetRequest<T = unknown>(
 }
 
 /**
- * POST request. When auth=true, adds Authorization Bearer; on 401 tries refresh and retries once.
+ * POST request. When auth=true, sends same-origin credentials; on 401 tries refresh once.
  */
 export async function fetchPostRequest<T = unknown>(
   url: string,
-  options: FetchPostRequestOptions = {}
+  options: FetchPostRequestOptions = {},
 ): Promise<T> {
   const { body, headers = {}, auth = false, queryParams, credentials: creds } = options;
   const mergedHeaders = auth ? mergeAuthHeaders(headers) : headers;

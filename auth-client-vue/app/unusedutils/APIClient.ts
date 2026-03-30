@@ -49,7 +49,7 @@ const buildRequestKey = (url: string, options: APIClientOptions = {}): string =>
 
 export const APIClient = async <T>(  url: string,  options: APIClientOptions = {} ): Promise<T> => {
     const authStore = useAuthStore();
-    const { accessToken, refresh, logout } = authStore;
+    const { refresh, logout } = authStore;
     const { error: notifyError } = useNotify();
 
     // 2. Request Deduplication
@@ -65,16 +65,8 @@ export const APIClient = async <T>(  url: string,  options: APIClientOptions = {
                 ...options,
                 // 3. Header Injection
                 onRequest({ options }) {
-                    const token = accessToken;
                     const { authenticated = false } = options as APIClientOptions;
-
-                    if (token && authenticated) {
-                        const existingHeaders = (options.headers ?? {}) as unknown as Record<string, string>;
-                        options.headers = {
-                            ...existingHeaders,
-                            Authorization: `Bearer ${token}`,
-                        } as any;
-                    }
+                    void authenticated;
                 },
 
                 // 4. Global Error & Session Management
@@ -90,9 +82,9 @@ export const APIClient = async <T>(  url: string,  options: APIClientOptions = {
                         if (!isRefreshing) {
                             isRefreshing = true;
                             try {
-                                const newToken = await refresh(); // Triggers BFF /refresh
+                                const ok = await refresh();
                                 isRefreshing = false;
-                                onTokenRefreshed(newToken);
+                                onTokenRefreshed(ok ? 'ok' : null);
                             } catch (refreshErr) {
                                 isRefreshing = false;
                                 onTokenRefreshed(null);
@@ -121,7 +113,6 @@ export const APIClient = async <T>(  url: string,  options: APIClientOptions = {
                                         ...options,
                                         headers: {
                                             ...existingHeaders,
-                                            Authorization: `Bearer ${token}`,
                                         } as any,
                                     }),
                                 );

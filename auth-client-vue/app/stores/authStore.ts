@@ -12,57 +12,37 @@ export interface AuthUser {
   mfaEnabled?: boolean;
 }
 
-export interface RefreshResponse {
-  accessToken: string;
-  user: AuthUser;
-}
-
 export const useAuthStore = defineStore('auth', () => {
-  // --- STATE ---
-  const accessToken = ref<string | null>(null);
   const user = ref<AuthUser | null>(null);
 
-  // --- GETTERS ---
-  const isAuthenticated = computed(() => !!accessToken.value);
+  const isAuthenticated = computed(() => !!user.value);
 
-  // --- ACTIONS ---
-
-  /**
-   * Primary login/success setter
-   */
-  function setAuth(token: string, userPayload: AuthUser) {
-    accessToken.value = token;
+  function setAuth(userPayload: AuthUser) {
     user.value = userPayload;
-    // Note: Cookies (refresh_token) are handled by the BFF/Browser automatically
   }
 
-  /**
-   * Clear local auth state only (no BFF call, no redirect).
-   * Used when logout has already called BFF and the app will navigate.
-   */
   function clearAuth() {
-    accessToken.value = null;
     user.value = null;
   }
 
   /**
-   * Refresh access token (e.g. after 401 from commonApi / auth flows).
-   * Calls the Nuxt Server (BFF) which forwards to the auth backend.
+   * Refresh BFF session (access token updated server-side). Updates user from response.
    */
-  async function refresh(): Promise<string> {
+  async function refresh(): Promise<boolean> {
     try {
-      // We call the BFF's refresh endpoint
-      // The BFF will verify the refresh_token cookie and return a new Access Token
-      const response = await $fetch<RefreshResponse>('/api/auth/email-password/refresh', {
+      const response = await $fetch<{ user: AuthUser }>('/api/auth/email-password/refresh', {
         method: 'POST',
+        credentials: 'include',
       });
 
-      setAuth(response.accessToken, response.user);
-      return response.accessToken;
-    } catch (error) {
-      // If refresh fails (expired refresh token), we must evacuate
+      if (response?.user) {
+        setAuth(response.user);
+        return true;
+      }
+      return false;
+    } catch {
       await logout();
-      throw error;
+      return false;
     }
   }
 
@@ -70,7 +50,6 @@ export const useAuthStore = defineStore('auth', () => {
    * Hard Logout - Clears state and redirects
    */
   async function logout() {
-    accessToken.value = null;
     user.value = null;
 
     try {
@@ -79,12 +58,10 @@ export const useAuthStore = defineStore('auth', () => {
       // Silent fail if network is already gone
     }
 
-    // Redirect to login with a reason
     await navigateTo('/auth/login?reason=session_expired');
   }
 
   return {
-    accessToken,
     user,
     isAuthenticated,
     setAuth,

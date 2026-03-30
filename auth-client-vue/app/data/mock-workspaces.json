@@ -1,0 +1,152 @@
+{
+  "user": {
+    "id": "usr_001",
+    "name": "Ananya Rao",
+    "email": "ananya@celestiallabs.io",
+    "avatarUrl": null,
+    "isPlatformSuperadmin": true
+  },
+  "organizations": [
+    {
+      "id": "org_001",
+      "name": "Celestial Labs",
+      "logoUrl": null,
+      "iconBgColor": "#4F46E5",
+      "role": "Admin",
+      "isCurrent": true
+    },
+    {
+      "id": "org_002",
+      "name": "Dev Factory",
+      "logoUrl": null,
+      "iconBgColor": "#94A3B8",
+      "role": "Viewer",
+      "isCurrent": false
+    }
+  ],
+  "workspaces": [
+    {
+      "id": "ws_001",
+      "name": "Analytics Hub",
+      "description": "View product metrics and dashboards",
+      "icon": "chart-bar",
+      "iconColor": "#EF4444",
+      "environment": "production",
+      "userRole": "Admin",
+      "accessLevel": "full",
+      "isPinned": true,
+      "lastAccessed": "2026-03-30T08:00:00Z",
+      "redirectUrl": "https://excalidraw.com/"
+    },
+    {
+      "id": "ws_002",
+      "name": "Billing Console",
+      "description": "Manage subscriptions and invoices",
+      "icon": "credit-card",
+      "iconColor": "#3B82F6",
+      "environment": "production",
+      "userRole": "Admin",
+      "accessLevel": "full",
+      "isPinned": true,
+      "lastAccessed": "2026-03-29T14:00:00Z",
+      "redirectUrl": "https://excalidraw.com/"
+    },
+    {
+      "id": "ws_003",
+      "name": "Dev Sandbox",
+      "description": "Development testing environment",
+      "icon": "code",
+      "iconColor": "#22C55E",
+      "environment": "sandbox",
+      "userRole": "Sandbox",
+      "accessLevel": "full",
+      "isPinned": false,
+      "lastAccessed": "2026-03-22T10:00:00Z",
+      "redirectUrl": "https://excalidraw.com/"
+    },
+    {
+      "id": "ws_004",
+      "name": "Marketing Workspace",
+      "description": "Plan campaigns and track performance",
+      "icon": "megaphone",
+      "iconColor": "#8B5CF6",
+      "environment": "production",
+      "userRole": "Viewer",
+      "accessLevel": "full",
+      "isPinned": true,
+      "lastAccessed": null,
+      "redirectUrl": "https://excalidraw.com/"
+    },
+    {
+      "id": "ws_005",
+      "name": "Support Desk",
+      "description": "Manage customer support tickets",
+      "icon": "headset",
+      "iconColor": "#06B6D4",
+      "environment": "production",
+      "userRole": "Viewer",
+      "accessLevel": "full",
+      "isPinned": true,
+      "lastAccessed": null,
+      "redirectUrl": "https://excalidraw.com/"
+    },
+    {
+      "id": "ws_006",
+      "name": "Experiment Lab",
+      "description": "Test and validate new app features",
+      "icon": "flask",
+      "iconColor": "#F43F5E",
+      "environment": "sandbox",
+      "userRole": "Sandbox",
+      "accessLevel": "full",
+      "isPinned": true,
+      "lastAccessed": null,
+      "redirectUrl": "https://excalidraw.com/"
+    },
+    {
+      "id": "ws_007",
+      "name": "Secret Archive",
+      "description": "Classified project documents",
+      "icon": "lock-simple",
+      "iconColor": "#94A3B8",
+      "environment": "production",
+      "userRole": null,
+      "accessLevel": "restricted",
+      "isPinned": false,
+      "lastAccessed": null,
+      "redirectUrl": null
+    },
+    {
+      "id": "ws_008",
+      "name": "Data Vault",
+      "description": "Encrypted data storage and retrieval",
+      "icon": "lock-simple",
+      "iconColor": "#94A3B8",
+      "environment": "production",
+      "userRole": null,
+      "accessLevel": "restricted",
+      "isPinned": false,
+      "lastAccessed": null,
+      "redirectUrl": null
+    }
+  ],
+  "administration": {
+    "tenantConsole": {
+      "label": "Tenant Console",
+      "description": "Org settings & Users",
+      "icon": "gear-six",
+      "iconColor": "#F97316",
+      "redirectUrl": "https://excalidraw.com/",
+      "visible": true
+    },
+    "platformAdmin": {
+      "label": "Platform Admin",
+      "description": "Multi-tenant Oversight",
+      "icon": "shield-check",
+      "iconColor": "#EF4444",
+      "redirectUrl": "https://excalidraw.com/",
+      "visible": true,
+      "isSuperadminOnly": true
+    }
+  }
+}

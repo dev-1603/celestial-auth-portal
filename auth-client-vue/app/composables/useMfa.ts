@@ -51,7 +51,7 @@ export function useMfa() {
     try {
       const result = await serviceVerify(code);
       if (result) {
-        setAuth(result.accessToken, result.user);
+        setAuth(result.user);
         const redirectTo = authConfig.redirects?.afterLogin ?? "/app";
         await router.push(redirectTo);
         return true;

@@ -49,7 +49,7 @@ async function restGetOAuthAuthorizationUrl(
   if (!path) throw createError({ statusCode: 400, statusMessage: 'Unknown provider' });
 
   const url = buildUrl(path);
-  const headers = buildBackendHeaders(event, {});
+  const headers = await buildBackendHeaders(event, {});
 
   const res = await fetch(url, {
     method: 'GET',
@@ -94,7 +94,7 @@ async function restExchangeOAuthCode(
   if (!path) throw createError({ statusCode: 400, statusMessage: 'Unknown provider' });
 
   const url = buildUrl(path);
-  const headers = buildBackendHeaders(event, {});
+  const headers = await buildBackendHeaders(event, {});
 
   const res = await fetch(url, {
     method: 'POST',
@@ -136,7 +136,7 @@ async function restCreateOAuthSession(
   const path = getPath('auth', 'oauth', 'session');
   if (!path) throw createError({ statusCode: 500, statusMessage: 'Route config missing' });
   const url = buildUrl(path);
-  const headers = buildBackendHeaders(event, {});
+  const headers = await buildBackendHeaders(event, {});
 
   const res = await fetch(url, {
     method: 'POST',
@@ -170,7 +170,7 @@ async function restValidateMagicToken(event: H3Event, payload: { token: string }
   if (!path) throw createError({ statusCode: 500, statusMessage: 'Route config missing' });
 
   const url = buildUrl(path);
-  const headers = buildBackendHeaders(event, {});
+  const headers = await buildBackendHeaders(event, {});
 
   const res = await fetch(url, {
     method: 'POST',
@@ -210,7 +210,7 @@ async function restGetProviderConfig(
   if (!path) return [];
 
   const url = buildUrl(path);
-  const headers = buildBackendHeaders(event, tenantId ? { tenantId } : {});
+  const headers = await buildBackendHeaders(event, tenantId ? { tenantId } : {});
 
   const res = await fetch(url, { method: 'GET', headers });
   const data = await res.json().catch(() => ({}));

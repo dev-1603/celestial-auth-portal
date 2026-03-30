@@ -9,8 +9,8 @@ import type {
   ResetPasswordInput,
 } from "../../schema/zod/authSchemas";
 
-export type LoginWithPasswordResult = {
-  accessToken: string;
+/** BFF strips JWTs; client only receives user profile where applicable. */
+export type AuthSuccessPayload = {
   user: { id: string; email: string; tenantId?: string; tenantSlug?: string; role?: string };
 };
 
@@ -22,8 +22,8 @@ export type MeUser = { id: string; email: string; tenantId?: string; tenantSlug?
  * Login with email and password. Calls BFF POST /api/auth/email-password/login.
  */
 export async function loginWithPassword(
-  payload: LoginWithPasswordInput
-): Promise<LoginWithPasswordResult> {
+  payload: LoginWithPasswordInput,
+): Promise<AuthSuccessPayload> {
   try {
     const body = {
       email: payload.email,
@@ -31,14 +31,14 @@ export async function loginWithPassword(
       remember_me: payload.rememberMe ?? false,
     };
 
-    const res = await fetchPostRequest<LoginWithPasswordResult | AuthApiError>(
+    const res = await fetchPostRequest<AuthSuccessPayload | AuthApiError>(
       "/api/auth/email-password/login",
-      { body, auth: false }
+      { body, auth: false },
     );
     if (res && typeof res === "object" && "error" in res) {
       throw new Error((res as AuthApiError).error);
     }
-    return res as LoginWithPasswordResult;
+    return res as AuthSuccessPayload;
   } catch (error) {
     throw error;
   }
@@ -51,7 +51,7 @@ export async function logout(): Promise<void> {
   try {
     const res = await fetchPostRequest<unknown | AuthApiError>(
       "/api/auth/email-password/logout",
-      { body: {}, auth: false, credentials: "include" }
+      { body: {}, auth: false, credentials: "include" },
     );
     if (res && typeof res === "object" && "error" in res) {
       throw new Error((res as AuthApiError).error);
@@ -62,25 +62,25 @@ export async function logout(): Promise<void> {
 }
 
 /**
- * Refresh access token. Calls BFF POST /api/auth/email-password/refresh with cookies.
+ * Refresh session. Calls BFF POST /api/auth/email-password/refresh with cookies.
  */
-export async function refreshToken(): Promise<LoginWithPasswordResult | null> {
+export async function refreshToken(): Promise<AuthSuccessPayload | null> {
   try {
-    const res = await fetchPostRequest<LoginWithPasswordResult | AuthApiError>(
+    const res = await fetchPostRequest<AuthSuccessPayload | AuthApiError>(
       "/api/auth/email-password/refresh",
-      { body: {}, auth: false, credentials: "include" }
+      { body: {}, auth: false, credentials: "include" },
     );
     if (res && typeof res === "object" && "error" in res) {
       return null;
     }
-    return res as LoginWithPasswordResult;
+    return res as AuthSuccessPayload;
   } catch (error) {
     throw error;
   }
 }
 
 /**
- * Get current user. Uses common API with auth=true (Bearer from store).
+ * Get current user. Uses BFF session cookie (auth=true).
  */
 export async function getMe(): Promise<MeUser | null> {
   try {
@@ -161,9 +161,9 @@ export async function sendEmailOtp(email: string): Promise<void> {
 /**
  * Verify email OTP code and complete login (BFF sets cookie).
  */
-export async function verifyEmailOtp(payload: { email: string; code: string }): Promise<LoginWithPasswordResult | null> {
+export async function verifyEmailOtp(payload: { email: string; code: string }): Promise<AuthSuccessPayload | null> {
   try {
-    const res = await fetchPostRequest<LoginWithPasswordResult | AuthApiError>("/api/auth/email-otp/verify", {
+    const res = await fetchPostRequest<AuthSuccessPayload | AuthApiError>("/api/auth/email-otp/verify", {
       body: payload,
       auth: false,
       credentials: "include",
@@ -171,7 +171,7 @@ export async function verifyEmailOtp(payload: { email: string; code: string }): 
     if (res && typeof res === "object" && "error" in res) {
       return null;
     }
-    return res as LoginWithPasswordResult;
+    return res as AuthSuccessPayload;
   } catch (error) {
     throw error;
   }
@@ -210,9 +210,9 @@ export async function sendSmsOtp(payload: { phone: string; countryCode?: string 
 /**
  * Verify phone SMS OTP and complete login (BFF sets cookie).
  */
-export async function verifySmsOtp(payload: { phone: string; code: string }): Promise<LoginWithPasswordResult | null> {
+export async function verifySmsOtp(payload: { phone: string; code: string }): Promise<AuthSuccessPayload | null> {
   try {
-    const res = await fetchPostRequest<LoginWithPasswordResult | AuthApiError>("/api/auth/phone-otp/verify", {
+    const res = await fetchPostRequest<AuthSuccessPayload | AuthApiError>("/api/auth/phone-otp/verify", {
       body: payload,
       auth: false,
       credentials: "include",
@@ -220,7 +220,7 @@ export async function verifySmsOtp(payload: { phone: string; code: string }): Pr
     if (res && typeof res === "object" && "error" in res) {
       return null;
     }
-    return res as LoginWithPasswordResult;
+    return res as AuthSuccessPayload;
   } catch (error) {
     throw error;
   }
@@ -263,17 +263,17 @@ export async function verifyMfaSetup(code: string): Promise<unknown> {
 }
 
 /**
- * MFA: verify (login challenge). Requires auth (or session).
+ * MFA: verify (login challenge). Requires BFF session.
  */
-export async function verifyMfa(code: string): Promise<LoginWithPasswordResult | null> {
+export async function verifyMfa(code: string): Promise<AuthSuccessPayload | null> {
   try {
-    const res = await fetchPostRequest<LoginWithPasswordResult | AuthApiError>("/api/auth/mfa/verify", {
+    const res = await fetchPostRequest<AuthSuccessPayload | AuthApiError>("/api/auth/mfa/verify", {
       body: { code },
       auth: true,
       credentials: "include",
     });
     if (res && typeof res === "object" && "error" in res) return null;
-    return res as LoginWithPasswordResult;
+    return res as AuthSuccessPayload;
   } catch (error) {
     throw error;
   }

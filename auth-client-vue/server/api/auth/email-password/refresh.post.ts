@@ -3,6 +3,7 @@
  */
 
 import { getPath } from "~/config/apiRoutes";
+import { finalizeAuthResponseForClient } from "../../../utils/bffSession";
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig();
@@ -36,5 +37,5 @@ export default defineEventHandler(async (event) => {
     throw createError({ statusCode: response.status, statusMessage: message });
   }
 
-  return data;
+  return finalizeAuthResponseForClient(event, data as Record<string, unknown>, "refresh");
 });

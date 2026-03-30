@@ -6,6 +6,7 @@
 import { getAndVerifyHandshake } from '../../../utils/handshakeCookie';
 import { exchangeCodeForUserInfo } from '../../../utils/oauthBff';
 import { createOAuthSession } from '../../../utils/backendClient';
+import { finalizeAuthResponseForClient } from '../../../utils/bffSession';
 import { authConfig } from '~/config/authConfig';
 
 export default defineEventHandler(async (event) => {
@@ -39,6 +40,8 @@ export default defineEventHandler(async (event) => {
   if (!session?.accessToken || !session?.user) {
     throw createError({ statusCode: 400, statusMessage: 'Failed to create OAuth session' });
   }
+
+  await finalizeAuthResponseForClient(event, session as Record<string, unknown>, 'login');
 
   const redirectTo = (authConfig as { redirects?: { afterLogin?: string } }).redirects?.afterLogin ?? '/app';
   // Redirect to /login/callback/[provider] (client-side route) with correct provider param

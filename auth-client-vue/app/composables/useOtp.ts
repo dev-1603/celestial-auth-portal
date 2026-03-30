@@ -10,7 +10,7 @@ export function useOtp() {
   const { setAuth } = useAuthStore();
 
   const isEmailOtpEnabled = computed(
-    () => authConfig.methodsConfig?.email_otp?.enabled === true
+    () => authConfig.methodsConfig?.email_otp?.enabled === true,
   );
 
   const digits = computed(() => authConfig.methodsConfig?.email_otp?.digits ?? 6);
@@ -39,7 +39,7 @@ export function useOtp() {
     try {
       const result = await serviceVerify(payload);
       if (result) {
-        setAuth(result.accessToken, result.user);
+        setAuth(result.user);
         const redirectTo = authConfig.redirects?.afterLogin ?? "/app";
         await router.push(redirectTo);
       } else {

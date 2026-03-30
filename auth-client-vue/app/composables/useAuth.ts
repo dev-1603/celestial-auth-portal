@@ -16,10 +16,10 @@ export function useAuth() {
   const loading = ref(false);
   const error = ref<string | null>(null);
   const router = useRouter();
-  const { setAuth, clearAuth, user: storeUser, accessToken } = useAuthStore();
+  const { setAuth, clearAuth, user: storeUser } = useAuthStore();
 
   const isEmailPasswordEnabled = computed(
-    () => authConfig.methodsConfig?.email_password?.enabled === true
+    () => authConfig.methodsConfig?.email_password?.enabled === true,
   );
 
   const user = storeUser;
@@ -33,7 +33,7 @@ export function useAuth() {
     error.value = null;
     try {
       const result = await serviceLogin(values);
-      setAuth(result.accessToken, result.user);
+      setAuth(result.user);
       const redirectTo = authConfig.redirects?.afterLogin ?? "/app";
       await router.push(redirectTo);
     } catch (e) {
@@ -62,7 +62,7 @@ export function useAuth() {
     try {
       const result = await serviceRefresh();
       if (result) {
-        setAuth(result.accessToken, result.user);
+        setAuth(result.user);
         return true;
       }
       return false;
