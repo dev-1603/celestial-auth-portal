@@ -5,7 +5,6 @@ import {
   AvatarFallback,
   AvatarImage,
 } from '@/components/ui/avatar'
-import { useWorkspaces } from '~/composables/useWorkspaces'
 
 const { currentOrg, user } = useWorkspaces()
 
@@ -25,7 +24,7 @@ const initials = computed(() => {
     <div class="mx-auto flex h-full max-w-[1400px] items-center justify-between px-4 sm:px-6">
       <div class="flex items-center gap-2.5">
         <span
-          class="flex h-8 w-8 items-center justify-center rounded-full bg-l-to-br from-indigo-500 to-emerald-400 text-white">
+          class="flex h-8 w-8 items-center justify-center rounded-full bg-linear-to-br from-indigo-500 to-emerald-400 text-white">
           <Sparkles class="h-4 w-4" />
         </span>
         <p class="text-[18px] leading-none">
