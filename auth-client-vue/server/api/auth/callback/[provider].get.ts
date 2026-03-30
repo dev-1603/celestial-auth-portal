@@ -28,7 +28,7 @@ export default defineEventHandler(async (event) => {
 
   const userInfo = await exchangeCodeForUserInfo(provider, code, redirectUri, code_verifier);
 
-  await createOAuthSession(event, {
+  const session = await createOAuthSession(event, {
     provider: userInfo.providerId,
     providerUserId: userInfo.providerUserId,
     email: userInfo.email,
@@ -36,6 +36,12 @@ export default defineEventHandler(async (event) => {
     picture: userInfo.picture,
   });
 
+  if (!session?.accessToken || !session?.user) {
+    throw createError({ statusCode: 400, statusMessage: 'Failed to create OAuth session' });
+  }
+
   const redirectTo = (authConfig as { redirects?: { afterLogin?: string } }).redirects?.afterLogin ?? '/app';
-  return sendRedirect(event, redirectTo, 302);
+  // Redirect to /login/callback/[provider] (client-side route) with correct provider param
+  return sendRedirect(event, `/login/callback/${provider}`, 302);
+  // return sendRedirect(event, redirectTo, 302);
 });

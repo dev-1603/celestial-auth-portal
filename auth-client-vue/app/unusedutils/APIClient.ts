@@ -1,4 +1,4 @@
-// app/utils/APIClient.ts
+// app/unusedutils/APIClient.ts — not wired; kept for reference
 import { $fetch, type FetchOptions } from 'ofetch';
 import { createError } from 'nuxt/app';
 import { useNotify } from '@/composables/useNotify';

@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { navigateTo } from '#app';
+import { logout as logoutService } from '../services/authClientService';
 
 export interface AuthUser {
   id: string;
@@ -45,8 +46,8 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   /**
-   * The "Silent Healer" - Called by APIClient when a 401 occurs.
-   * Calls the Nuxt Server (BFF) which forwards to Express/NestJS.
+   * Refresh access token (e.g. after 401 from commonApi / auth flows).
+   * Calls the Nuxt Server (BFF) which forwards to the auth backend.
    */
   async function refresh(): Promise<string> {
     try {
@@ -72,9 +73,8 @@ export const useAuthStore = defineStore('auth', () => {
     accessToken.value = null;
     user.value = null;
 
-    // Call BFF to clear the refresh_token cookie
     try {
-      await $fetch('/api/auth/email-password/logout', { method: 'POST' });
+      await logoutService();
     } catch {
       // Silent fail if network is already gone
     }

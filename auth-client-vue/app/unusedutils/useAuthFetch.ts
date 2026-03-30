@@ -1,6 +1,7 @@
 /**
  * Auth-aware fetch using the common API instance.
  * On 401, the common API tries refresh once and retries (see commonApi.ts).
+ * Not wired — kept in unusedutils for reference.
  */
 
 import { fetchGetRequest, fetchPostRequest } from "../lib/commonApi";
