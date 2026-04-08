@@ -7,7 +7,7 @@ import { getAndVerifyHandshake } from '../../../utils/handshakeCookie';
 import { exchangeCodeForUserInfo } from '../../../utils/oauthBff';
 import { createOAuthSession } from '../../../utils/backendClient';
 import { finalizeAuthResponseForClient } from '../../../utils/bffSession';
-import { authConfig } from '~/config/authConfig';
+import { resolvePostLoginRedirect } from '../../../utils/postLoginRedirect';
 
 export default defineEventHandler(async (event) => {
   const provider = getRouterParam(event, 'provider');
@@ -42,9 +42,6 @@ export default defineEventHandler(async (event) => {
   }
 
   await finalizeAuthResponseForClient(event, session as Record<string, unknown>, 'login');
-
-  const redirectTo = (authConfig as { redirects?: { afterLogin?: string } }).redirects?.afterLogin ?? '/app';
-  // Redirect to /login/callback/[provider] (client-side route) with correct provider param
-  return sendRedirect(event, `/login/callback/${provider}`, 302);
-  // return sendRedirect(event, redirectTo, 302);
+  const redirectTo = await resolvePostLoginRedirect(event);
+  return sendRedirect(event, redirectTo, 302);
 });

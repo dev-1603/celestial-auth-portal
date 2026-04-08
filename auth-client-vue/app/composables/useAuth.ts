@@ -72,8 +72,22 @@ export function useAuth() {
   }
 
   async function getMe() {
-    return serviceGetMe();
+    try {
+
+      const result = await serviceGetMe();
+      if (!result) {
+        throw new Error('Failed to get user');
+      }
+      setAuth(result.user);
+      return result;
+    } catch (error) {
+      error.value = error instanceof Error ? error.message : 'Failed to get user';
+      return null;
+    } finally {
+      loading.value = false;
+    }
   }
+
 
   return {
     loginWithPassword,

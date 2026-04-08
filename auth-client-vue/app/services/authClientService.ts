@@ -16,7 +16,25 @@ export type AuthSuccessPayload = {
 
 export type AuthApiError = { error: string; code?: string };
 
-export type MeUser = { id: string; email: string; tenantId?: string; tenantSlug?: string; role?: string };
+export type MeUserApp = {
+  clientId: string;
+  appName: string;
+  moduleKey?: string | null;
+  moduleName?: string | null;
+  appRole?: string | null;
+};
+
+export type MeUser = {
+  id?: string;
+  userId?: string;
+  email: string;
+  tenantId?: string;
+  tenantSlug?: string | null;
+  role?: string;
+  roles?: string[];
+  apps?: MeUserApp[];
+  defaultAppClientId?: string | null;
+};
 
 /**
  * Login with email and password. Calls BFF POST /api/auth/email-password/login.

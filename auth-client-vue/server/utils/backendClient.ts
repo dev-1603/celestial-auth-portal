@@ -13,6 +13,23 @@ type BackendResponse = {
   user?: { id: string; email: string; tenantId?: string; tenantSlug?: string; role?: string };
 };
 
+export type BackendMeResponse = {
+  userId: string;
+  email: string;
+  tenantId?: string;
+  tenantSlug?: string | null;
+  role?: string;
+  roles?: string[];
+  apps?: Array<{
+    clientId: string;
+    appName: string;
+    moduleKey?: string | null;
+    moduleName?: string | null;
+    appRole?: string | null;
+  }>;
+  defaultAppClientId?: string | null;
+};
+
 type AuthProtocol = 'rest' | 'grpc' | 'trpc';
 
 function getAuthProtocol(): AuthProtocol {
@@ -138,21 +155,33 @@ async function restCreateOAuthSession(
   const url = buildUrl(path);
   const headers = await buildBackendHeaders(event, {});
 
-  const res = await fetch(url, {
-    method: 'POST',
-    headers: { ...headers, 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
 
-  const data = await res.json().catch(() => ({}));
-  if (res.headers.get('set-cookie')) {
-    forwardSetCookie(event, res);
+    const data = await res.json().catch(() => ({}));
+    if (res.headers.get('set-cookie')) {
+      forwardSetCookie(event, res);
+    }
+    if (!res.ok) {
+      const msg = (data?.error as string) || 'OAuth session failed';
+      throw createError({ statusCode: res.status, statusMessage: msg });
+    }
+    return data as BackendResponse;
+  } catch (error: unknown) {
+    if (typeof error === 'object' && error !== null && 'statusCode' in error) {
+      throw error;
+    }
+
+    throw createError({
+      statusCode: 502,
+      statusMessage: 'Unable to reach auth service for OAuth session',
+      cause: error,
+    });
   }
-  if (!res.ok) {
-    const msg = (data?.error as string) || 'OAuth session failed';
-    throw createError({ statusCode: res.status, statusMessage: msg });
-  }
-  return data as BackendResponse;
 }
 
 export async function createOAuthSession(
@@ -230,5 +259,24 @@ export async function getProviderConfig(
 ): Promise<{ id: string; displayName: string; logo?: string }[]> {
   const protocol = getAuthProtocol();
   if (protocol === 'rest') return restGetProviderConfig(event, tenantId);
+  return unsupportedProtocol(protocol);
+}
+
+/** REST: fetch current authenticated user context from auth-core /me. */
+async function restGetCurrentUserContext(event: H3Event): Promise<BackendMeResponse | null> {
+  const path = getPath('auth', 'email_password', 'me');
+  if (!path) return null;
+
+  const url = buildUrl(path);
+  const headers = await buildBackendHeaders(event, { authenticated: true });
+  const res = await fetch(url, { method: 'GET', headers });
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null);
+  return data as BackendMeResponse | null;
+}
+
+export async function getCurrentUserContext(event: H3Event): Promise<BackendMeResponse | null> {
+  const protocol = getAuthProtocol();
+  if (protocol === 'rest') return restGetCurrentUserContext(event);
   return unsupportedProtocol(protocol);
 }

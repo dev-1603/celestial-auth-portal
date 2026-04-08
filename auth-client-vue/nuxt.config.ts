@@ -32,6 +32,7 @@ export default defineNuxtConfig({
     authProtocol: (process.env.AUTH_PROTOCOL || 'rest') as 'rest' | 'grpc' | 'trpc',
     public: {
       authApiUrl: process.env.NUXT_PUBLIC_AUTH_API_URL || 'http://localhost:5001',
+      mainAppFallbackUrl: process.env.NUXT_PUBLIC_MAIN_APP_FALLBACK_URL || '',
     },
   },
 
