@@ -1,7 +1,28 @@
+/**
+ * Login Handler Tests
+ * 
+ * Tests for email/password login handler using AuthIdentity.
+ */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+
+// Mock env config before any imports that use it
+vi.mock('../../../../config/env.config', () => ({
+    env: {
+        DATABASE_URL: 'postgresql://test',
+        DIRECT_URL: 'postgresql://test',
+        NODE_ENV: 'test',
+    },
+}))
+
+// Mock prisma before importing handlers
+vi.mock('../../../../lib/prisma', () => ({
+    prisma: {},
+}))
+
 import { loginWithEmailPassword } from '../login.handler';
 
+import * as authIdentityRepo from '../../../../repositories/auth-identity.repository';
 import * as userRepo from '../../../../repositories/user.repository';
 import * as tokenService from '../../../../services/token.service';
 
@@ -14,10 +35,11 @@ function createMockRes() {
 }
 
 describe('loginWithEmailPassword', () => {
-    const findGlobalUserWithTenantByEmail = vi.spyOn(userRepo, 'findGlobalUserWithTenantByEmail');
+    const findAuthIdentityWithUser = vi.spyOn(authIdentityRepo, 'findAuthIdentityWithUser');
+    const findGlobalUserById = vi.spyOn(userRepo, 'findGlobalUserById');
+    const findTenantUserLink = vi.spyOn(userRepo, 'findTenantUserLink');
     const verifyUserPassword = vi.spyOn(tokenService, 'verifyUserPassword');
     const buildLoginTokens = vi.spyOn(tokenService, 'buildLoginTokens');
-    // cookie is set via res.cookie in the handler
 
     beforeEach(() => {
         vi.resetAllMocks();
@@ -33,11 +55,43 @@ describe('loginWithEmailPassword', () => {
         expect(res.json).toHaveBeenCalledWith({ error: 'Email and password are required' });
     });
 
-    it('returns 401 when user not found', async () => {
+    it('returns 401 when AuthIdentity not found', async () => {
         const req: any = { body: { email: 'a@test.com', password: 'secret' } };
         const res = createMockRes();
 
-        findGlobalUserWithTenantByEmail.mockResolvedValueOnce(null);
+        findAuthIdentityWithUser.mockResolvedValueOnce(null);
+
+        await loginWithEmailPassword(req, res, vi.fn());
+
+        expect(res.status).toHaveBeenCalledWith(401);
+        expect(res.json).toHaveBeenCalledWith({ error: 'Invalid credentials' });
+    });
+
+    it('returns 401 when user has no passwordHash', async () => {
+        const req: any = { body: { email: 'a@test.com', password: 'secret' } };
+        const res = createMockRes();
+
+        findAuthIdentityWithUser.mockResolvedValueOnce({
+            id: 'identity-1',
+            userId: 'user-1',
+            providerType: 'email',
+            providerUserId: 'a@test.com',
+            email: 'a@test.com',
+            user: {
+                id: 'user-1',
+                email: 'a@test.com',
+                tenantId: 'tenant-1',
+                tenantSlug: 'tenant-slug',
+            },
+        } as any);
+        findGlobalUserById.mockResolvedValueOnce({
+            id: 'user-1',
+            email: 'a@test.com',
+            passwordHash: null,
+            isVerified: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+        });
 
         await loginWithEmailPassword(req, res, vi.fn());
 
@@ -49,12 +103,26 @@ describe('loginWithEmailPassword', () => {
         const req: any = { body: { email: 'a@test.com', password: 'wrong' } };
         const res = createMockRes();
 
-        findGlobalUserWithTenantByEmail.mockResolvedValueOnce({
+        findAuthIdentityWithUser.mockResolvedValueOnce({
+            id: 'identity-1',
+            userId: 'user-1',
+            providerType: 'email',
+            providerUserId: 'a@test.com',
+            email: 'a@test.com',
+            user: {
+                id: 'user-1',
+                email: 'a@test.com',
+                tenantId: 'tenant-1',
+                tenantSlug: 'tenant-slug',
+            },
+        } as any);
+        findGlobalUserById.mockResolvedValueOnce({
             id: 'user-1',
             email: 'a@test.com',
             passwordHash: 'hashed',
-            tenantId: 'tenant-1',
-            tenantSlug: 'tenant-slug',
+            isVerified: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
         });
         verifyUserPassword.mockResolvedValueOnce(false);
 
@@ -68,13 +136,28 @@ describe('loginWithEmailPassword', () => {
         const req: any = { body: { email: 'a@test.com', password: 'secret' } };
         const res = createMockRes();
 
-        findGlobalUserWithTenantByEmail.mockResolvedValueOnce({
+        findAuthIdentityWithUser.mockResolvedValueOnce({
+            id: 'identity-1',
+            userId: 'user-1',
+            providerType: 'email',
+            providerUserId: 'a@test.com',
+            email: 'a@test.com',
+            user: {
+                id: 'user-1',
+                email: 'a@test.com',
+                tenantId: 'tenant-1',
+                tenantSlug: 'tenant-slug',
+            },
+        } as any);
+        findGlobalUserById.mockResolvedValueOnce({
             id: 'user-1',
             email: 'a@test.com',
             passwordHash: 'hashed',
-            tenantId: 'tenant-1',
-            tenantSlug: 'tenant-slug',
+            isVerified: false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
         });
+        findTenantUserLink.mockResolvedValueOnce(null);
         verifyUserPassword.mockResolvedValueOnce(true);
         buildLoginTokens.mockReturnValueOnce({
             accessToken: 'access-token',
@@ -98,7 +181,7 @@ describe('loginWithEmailPassword', () => {
             email: 'a@test.com',
             tenantId: 'tenant-1',
             tenantSlug: 'tenant-slug',
-            role: 'user',
+            role: 'USER',
         });
         expect(res.cookie).toHaveBeenCalledWith('celestial_refresh_token', 'refresh-token', {
             httpOnly: true,

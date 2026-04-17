@@ -1,36 +1,60 @@
-import express ,{ type Express } from 'express';
-
+/**
+ * src/app.ts
+ *
+ * Application factory: creates and configures the Express app.
+ * Routes are initialized only via routes/index.ts. Error handler is registered LAST.
+ */
+import express, { Application } from 'express'
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import helmet from 'helmet'
-import { registerRoutes } from './routes.js'
-// import { errorHandler } from './middlewares/error-handler'
-import { env } from './config/env.config'
+import swaggerUi from 'swagger-ui-express'
+import { registerRoutes } from './routes'
+import { getOpenApiSpec } from './docs/swagger.config'
+import errorHandler, { registerProcessHandlers } from './middleware/errorHandler'
 
-export const createApp = (): Express => {
-    const app = express()
+/**
+ * Create and configure the Express application.
+ */
+export function createApp(): Application {
+  const app = express()
 
-    // ── 1. Security Headers ──────────────────────────
-    app.use(helmet())
+  // Middleware
+  app.use(helmet())
+  app.use(cors())
+  app.use(express.json())
+  app.use(cookieParser())
 
-    // ── 2. CORS ──────────────────────────────────────
-    app.use(cors({
-        origin: env.ALLOWED_ORIGINS.split(','),
-        credentials: true,                // must be true for HttpOnly cookies
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        allowedHeaders: ['Content-Type', 'Authorization'],
-    }))
+  // API docs (OpenAPI 3 spec + Swagger UI at /docs)
+  const openApiSpec = getOpenApiSpec()
+  app.get('/docs/spec', (_req, res) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.send(openApiSpec)
+  })
+  app.use(
+    '/docs',
+    swaggerUi.serve,
+    swaggerUi.setup(openApiSpec, {
+      swaggerOptions: {
+        persistAuthorization: true,
+        displayRequestDuration: true,
+        filter: true,
+        tryItOutEnabled: true,
+      },
+      customSiteTitle: 'Celestial Auth Core API',
+      customCss: '.swagger-ui .topbar { display: none }',
+    })
+  )
 
-    // ── 3. Body Parsers ───────────────────────────────
-    app.use(express.json({ limit: '25kb' }))         // prevents payload bombing
-    app.use(express.urlencoded({ extended: true }))
-    app.use(cookieParser())
+  // Routes (single entry: versioned API and module prefixes in routes/index.ts)
+  registerRoutes(app)
 
-    // ── 4. Routes ─────────────────────────────────────
-    registerRoutes(app)
+  // Error handler (must be last)
+  app.use(errorHandler)
 
-    // ── 5. Global Error Handler ───────────────────────
-    // app.use(errorHandler)              // always last
+  registerProcessHandlers()
 
-    return app
+  return app
 }
+
+export default createApp

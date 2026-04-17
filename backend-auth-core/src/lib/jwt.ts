@@ -2,13 +2,15 @@
 import jwt, { Secret, SignOptions } from 'jsonwebtoken'
 import { authConfig } from '../config/auth.config'
 
+export type GlobalRole = 'USER' | 'ADMIN' | 'OWNER'
+
 export interface JWTPayload {
     userId: string
     tenantId: string
     email: string
-    role: string
+    role: GlobalRole
     clientId?: string
-    tenantSlug?: string;
+    tenantSlug?: string
     apps?: {
         key: string
         role: string
@@ -20,8 +22,8 @@ export interface TokenPair {
     refreshToken: string
 }
 
-const accessSecret = authConfig.jwt.accessSecret as Secret
-const refreshSecret = authConfig.jwt.refreshSecret as Secret
+const accessSecret: Secret = authConfig.jwt.accessSecret as Secret
+const refreshSecret: Secret = authConfig.jwt.refreshSecret as Secret
 
 const accessOptions: SignOptions = {
     algorithm: 'HS256',

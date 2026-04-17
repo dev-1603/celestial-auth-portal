@@ -1,0 +1,530 @@
+/**
+ * OpenAPI path definitions for Auth Email module.
+ * Paths are relative to servers[].url. Unversioned: /, /health, /health/live, /health/ready.
+ * Versioned: /api/v1/auth/email/*
+ */
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
+
+/**
+ * @openapi
+ * /:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: API root (unversioned)
+ *     operationId: getApiRoot
+ *     description: Returns a simple message indicating the Celestial Auth Core API is available. Not under API versioning.
+ *     responses:
+ *       '200':
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Celestial Auth Core API
+ *       '404':
+ *         description: Not Found — route has no handler (e.g. wrong path or method)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RouteNotFoundResponse'
+ */
+const root = true
+
+/**
+ * @openapi
+ * /health:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Health check (unversioned)
+ *     operationId: getHealth
+ *     description: Simple liveness. Returns status and service name. Not under API versioning.
+ *     responses:
+ *       '200':
+ *         description: OK
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthResponse'
+ */
+const health = true
+
+/**
+ * @openapi
+ * /health/live:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Liveness (unversioned)
+ *     operationId: getHealthLive
+ *     description: Checks database connectivity. Use for k8s liveness probes. Optional query details=true for pool info.
+ *     parameters:
+ *       - in: query
+ *         name: details
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: ['true', '1']
+ *         description: Include pool details in response
+ *     responses:
+ *       '200':
+ *         description: Service and DB are healthy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthDetailResponse'
+ *       '503':
+ *         description: Database unavailable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthDetailResponse'
+ */
+const healthLive = true
+
+/**
+ * @openapi
+ * /health/ready:
+ *   get:
+ *     tags:
+ *       - Health
+ *     summary: Readiness (unversioned)
+ *     operationId: getHealthReady
+ *     description: Checks database connectivity. Use for k8s readiness probes. Optional query details=true for pool info.
+ *     parameters:
+ *       - in: query
+ *         name: details
+ *         required: false
+ *         schema:
+ *           type: string
+ *           enum: ['true', '1']
+ *         description: Include pool details in response
+ *     responses:
+ *       '200':
+ *         description: Service is ready to accept traffic
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthDetailResponse'
+ *       '503':
+ *         description: Database unavailable
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/HealthDetailResponse'
+ */
+const healthReady = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/login:
+ *   post:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Login with email and password
+ *     operationId: authEmailLogin
+ *     description: |
+ *       Validates credentials, returns access token and sets httpOnly refresh cookie.
+ *       Multi-tenant; tenant is derived from TenantUserLink.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       '200':
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *         headers:
+ *           Set-Cookie:
+ *             description: celestial_refresh_token (httpOnly, 7d)
+ *             schema:
+ *               type: string
+ *               example: celestial_refresh_token=eyJ...; Path=/; HttpOnly; SameSite=Strict; Max-Age=604800
+ *       '400':
+ *         description: Missing email or password
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               error: "Email and password are required"
+ *       '401':
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               error: "Invalid credentials"
+ */
+const login = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/logout:
+ *   post:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Logout
+ *     operationId: authEmailLogout
+ *     description: Clears the refresh token cookie. No body required.
+ *     responses:
+ *       '200':
+ *         description: Success
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LogoutResponse'
+ */
+const logout = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/refresh:
+ *   post:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Refresh access token
+ *     operationId: authEmailRefresh
+ *     description: |
+ *       Reads refresh token from cookie (celestial_refresh_token), validates it,
+ *       resolves role from TenantUserLink, returns new access token and sets new refresh cookie.
+ *     security:
+ *       - cookieRefresh: []
+ *     responses:
+ *       '200':
+ *         description: New access token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/RefreshResponse'
+ *         headers:
+ *           Set-Cookie:
+ *             description: New celestial_refresh_token (httpOnly, 7d)
+ *             schema:
+ *               type: string
+ *       '401':
+ *         description: No refresh token or invalid/expired
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               noToken:
+ *                 value: { error: "No refresh token provided" }
+ *               invalid:
+ *                 value: { error: "Invalid or expired refresh token" }
+ *       '403':
+ *         description: Email not verified
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               error: "Email not verified"
+ */
+const refresh = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/me:
+ *   get:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Get current user
+ *     operationId: authEmailMe
+ *     description: Returns the authenticated user (userId, email, tenantId, role, apps). Requires Bearer token.
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       '200':
+ *         description: Current user
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/MeResponse'
+ *       '401':
+ *         description: Missing or invalid token
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             example:
+ *               error: "Authorization header must be in the format: Bearer <token>"
+ */
+const me = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/otp/send:
+ *   post:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Send OTP code to email
+ *     operationId: authEmailOtpSend
+ *     description: |
+ *       Generates and sends an OTP code to the user's email address.
+ *       The code is hashed and stored. In development, the code is returned in the response for testing.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       '200':
+ *         description: OTP sent successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: OTP sent to email
+ *                 otp:
+ *                   type: string
+ *                   description: Only returned in development mode
+ *                   example: "123456"
+ *       '400':
+ *         description: Missing email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '403':
+ *         description: Email OTP is disabled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '404':
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+const otpSend = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/otp/verify:
+ *   post:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Verify OTP code and login
+ *     operationId: authEmailOtpVerify
+ *     description: |
+ *       Verifies the OTP code sent to the user's email.
+ *       If valid, returns access token and sets refresh token cookie.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email, code]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               code:
+ *                 type: string
+ *                 description: OTP code (typically 6 digits)
+ *                 example: "123456"
+ *     responses:
+ *       '200':
+ *         description: Success - OTP verified and logged in
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *         headers:
+ *           Set-Cookie:
+ *             description: celestial_refresh_token (httpOnly, 7d)
+ *             schema:
+ *               type: string
+ *       '400':
+ *         description: Missing email or code
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '401':
+ *         description: Invalid, expired, or max attempts exceeded
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               invalid:
+ *                 value: { error: "Invalid OTP code" }
+ *               expired:
+ *                 value: { error: "Invalid or expired OTP code" }
+ *               maxAttempts:
+ *                 value: { error: "Maximum attempts exceeded. Please request a new code." }
+ *       '403':
+ *         description: Email OTP is disabled
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '404':
+ *         description: User not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+const otpVerify = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/password-reset/request:
+ *   post:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Request password reset
+ *     operationId: authEmailPasswordResetRequest
+ *     description: |
+ *       Generates a password reset token and sends it to the user's email address.
+ *       The token is stored in PasswordReset table and expires in 1 hour.
+ *       For security, always returns success even if user doesn't exist (prevents email enumeration).
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [email]
+ *             properties:
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *     responses:
+ *       '200':
+ *         description: Success (always returns this, even if user doesn't exist)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "If an account with that email exists, a password reset link has been sent."
+ *       '400':
+ *         description: Missing email
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       '429':
+ *         description: Too many requests (rate limited)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+const passwordResetRequest = true
+
+/**
+ * @openapi
+ * /api/v1/auth/email/password-reset/verify:
+ *   post:
+ *     tags:
+ *       - Auth - Email
+ *     summary: Complete password reset
+ *     operationId: authEmailPasswordResetVerify
+ *     description: |
+ *       Verifies the password reset token and updates the user's password.
+ *       Also supports GET method for browser redirects from email links.
+ *       Token must be valid and not expired. After successful reset, all reset tokens for the user are deleted.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [token, email, password]
+ *             properties:
+ *               token:
+ *                 type: string
+ *                 description: Password reset token from email
+ *                 example: "abc123def456..."
+ *               email:
+ *                 type: string
+ *                 format: email
+ *                 example: user@example.com
+ *               password:
+ *                 type: string
+ *                 description: New password (must meet password policy requirements)
+ *                 minLength: 8
+ *                 example: "NewSecurePassword123!"
+ *     parameters:
+ *       - in: query
+ *         name: token
+ *         schema:
+ *           type: string
+ *         description: Password reset token (for GET requests)
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *           format: email
+ *         description: User email (for GET requests)
+ *     responses:
+ *       '200':
+ *         description: Password reset successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Password has been reset successfully"
+ *       '400':
+ *         description: Missing fields or password doesn't meet policy
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               missingFields:
+ *                 value: { error: "Reset token, email, and new password are required" }
+ *               passwordPolicy:
+ *                 value: { error: "Password must be at least 8 characters long" }
+ *       '401':
+ *         description: Invalid, expired, or used token, or email mismatch
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *             examples:
+ *               invalidToken:
+ *                 value: { error: "Invalid or expired password reset token" }
+ *               emailMismatch:
+ *                 value: { error: "Email does not match reset token" }
+ */
+const passwordResetVerify = true
+
+export { root, health, healthLive, healthReady, login, logout, refresh, me, otpSend, otpVerify, passwordResetRequest, passwordResetVerify }

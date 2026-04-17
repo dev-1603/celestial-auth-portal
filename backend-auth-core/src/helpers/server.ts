@@ -58,15 +58,8 @@ export const createServerController = (app: { listen: (port: number) => Server }
     })
     server.on('listening', () => {
       const serviceUrl = resolveServiceUrl(env)
-      const pid = process.pid
-      logger.info('Auth service listening', {
-        url: serviceUrl,
-        port,
-        mode: env.NODE_ENV,
-        deploy: env.DEPLOYMENT_MODE,
-        pid,
-      })
-      console.log(`Auth Service started — ${serviceUrl} (pid:${pid})`)
+      // const pid = process.pid
+      logger.info('Auth service listening', { url: serviceUrl, port, mode: env.NODE_ENV, deploy: env.DEPLOYMENT_MODE })
     })
 
     server.on('error', (err: any) => {
